@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block sisältö %}
+<div class="content-section">
+  <div class="contents">
+    <div class="intro-message">
+      <h1>{{ title }}</h1>
+      <hr class="intro-divider">
+      {% if current_user.is_authenticated %}
+        <h3>Tervetuloa takaisin, {{ current_user.first_name }} {{ current_user.last_name }}!</h3></br>
+        <hr class="intro-divider">
+      {% else %}
+        <p>Kirjaudu sisään käyttääksesi sivuston toimintoja.</p>
+      {% endif %}
+      <hr class="intro-divider">
+    </div>
+  </div>
+</div>
+{% endblock %}

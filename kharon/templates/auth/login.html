@@ -1,0 +1,29 @@
+{% import "bootstrap/utils.html" as utils %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block sisältö %}
+<div class="content-section">
+  <div class="contents">
+    <div class="entryfields">
+      <div class="login-details">
+        <h1>Kirjaudu sisään tilillesi</h1>
+        <br/>
+        {{ wtf.quick_form(login) }}
+      </div>
+      <div class="error">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <h5>{{ message }}</h5>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

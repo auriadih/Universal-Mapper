@@ -1,0 +1,622 @@
+/****** Main style ******/
+
+body, html {
+  width: 100%;
+  background: url('../img/bg/greyfloral_@2X.png') repeat 0 0;
+}
+
+body, h1, h2, h3 {
+  font-family: 'Quattrocento Sans', 'Noto Sans', 'Lato', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  color: #606060;
+}
+
+h1, h2, h3 {
+  text-shadow: 1px 1px 1px #ccc;
+}
+
+p.copyright {
+  margin: 15px 0 0;
+}
+
+/* this div on base.html takes all subpages within */
+.wrapper {
+  min-height: 80%;
+  height: auto !important;
+  margin-top: -2em;
+  margin-left: 40px;
+  margin-right: 40px;
+  margin-bottom: 2em;
+}
+
+.contents {
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  background: url('../img/bg/groovepaper.png') repeat 0 0;
+  margin-top: 70px;
+  margin-bottom: 70px;
+}
+
+
+
+
+
+
+/****** Login main style ******/
+
+div.error {
+  padding-top: 15px;
+}
+
+
+
+
+
+
+/****** Code system selection page ******/
+
+div#koodisto-painikkeet div {
+  padding-left: 25px;
+}
+
+div#koodisto-painikkeet button {
+  padding-bottom: 2px;
+  margin: 5px;
+}
+
+
+
+
+
+
+/****** Mapper main style ******/
+
+/*** subpage navigation tabs ***/
+
+/* show tabs solidly connected to content */
+nav.navbar.navbar-expand-lg.navbar-light {
+  padding-bottom: 0px;
+}
+
+/* shift tabs a bit to seemlessly connect to content */
+.nav-tabs .nav-item {
+  margin-bottom: -2px;
+}
+
+/* make tab bottom border same color as the content */
+.nav-tabs {
+  border-bottom: 1px #ffffff;
+}
+
+/* make non-active tabs appearance similar to active tabs */
+.nav-tabs .nav-link {
+  border: 1px solid transparent;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+  color: #495057;
+  background-color: #eee;
+  border-color: #dee2e6 #dee2e6 #eee;
+}
+
+/* prevent clicking tabs */
+ul#original-tabs.nav-tabs li a {
+    pointer-events: none;
+}
+
+
+
+/*** original concepts filtering "navigation" ***/
+
+/* make air around filtering buttons */
+#filtering-buttons > li,
+#route-to-external-buttons > li {
+  padding-left: 2px;
+  padding-right: 2px;
+  margin-bottom: 4px;
+}
+
+/* separate buttons from background with borders */
+#filtering-buttons > li > button {
+  border: 2px solid #d5d5d5;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+}
+
+/* make active filter button distinct from non-active buttons */
+#filtering-buttons > li > button.active {
+  border: 2px solid #707070;
+  border-bottom: 4px solid #ff0000;
+  box-shadow: 0 5px 15px rgba(255, 0, 0, .4);
+  padding-bottom: 1px;
+  color: #eeeeee;
+  text-shadow: 0 0 3px #000000;
+}
+
+
+
+/*** loaders ***/
+
+/* placeholder for loading animation */
+.loader, .novel-loader {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50px;
+  text-align: center;
+  padding-top: 10px;
+  padding-bottom: 15px;
+}
+
+/* loading animation */
+.spinner {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #3498db;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 2s linear infinite;
+}
+
+/* function to animate */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* hide content div before content is loaded */
+div.original-placeholder, div.novel-placeholder {
+  display: none;
+}
+
+
+
+
+
+
+/****** Contents ******/
+
+/* div for tab content (sub-pages) */
+.tab-content {
+  padding: 15px;
+  background-color: #ffffff;
+  border: 1px solid #dee2e6;
+}
+
+/* novel concepts save buttons */
+#save-buttons {
+  padding-top: 10px;
+}
+
+/* similar concepts table div */
+#similars-block, #novel-similars-block {
+  padding-top: 5px;
+}
+
+/* change table selected row color */
+tr.table-light.selected > td {
+  background-color: #c9c9e6;
+}
+
+/* change table hovered selected row color */
+tr.table-light.selected:hover > td {
+  background-color: #b8b8dd;
+}
+
+/* fixed widths for certain table columns */
+table.dataTable tbody td.alkaen,
+table.dataTable tbody td.asti {
+  min-width: 90px;
+}
+
+
+
+/*** dynamic adjust of table elements for different screen resolutions ***/
+
+@media screen and (max-width: 1366px) {
+  /* DataTable rows */
+  table.dataTable thead th,
+  table.dataTable thead td {
+    font-size: 14px;
+  }
+  table.dataTable tbody th,
+  table.dataTable tbody td {
+    padding: 1px 2px;
+    font-size: 12px;
+  }
+
+  /* stop signs */
+  img.stop {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-height: 18px;
+    max-width: 18px;
+    filter: grayscale(90%);
+  }
+  .img-loader {
+    display: none;
+    margin-left: auto;
+    margin-right: auto;
+    width: 18px;
+    text-align: center;
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
+  .img-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    animation: spin 2s linear infinite;
+  }
+}
+
+@media screen and (min-width: 1367px) and (max-width: 1920px) {
+  /* DataTable rows */
+  table.dataTable thead th,
+  table.dataTable thead td {
+    font-size: 16px;
+  }
+  table.dataTable tbody th,
+  table.dataTable tbody td {
+    padding: 1px 2px;
+    font-size: 14px;
+  }
+
+  /* stop signs */
+  img.stop {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-height: 20px;
+    max-width: 20px;
+    filter: grayscale(90%);
+  }
+  .img-loader {
+    display: none;
+    margin-left: auto;
+    margin-right: auto;
+    width: 20px;
+    text-align: center;
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
+  .img-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 2s linear infinite;
+  }
+}
+
+@media screen and (min-width: 1921px) and (max-width: 2560px) {
+  /* DataTable rows */
+  table.dataTable thead th,
+  table.dataTable thead td {
+    font-size: 18px;
+  }
+  table.dataTable tbody th,
+  table.dataTable tbody td {
+    padding: 2px 3px;
+    font-size: 16px;
+  }
+
+  /* stop signs */
+  img.stop {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-height: 22px;
+    max-width: 22px;
+    filter: grayscale(90%);
+  }
+  .img-loader {
+    display: none;
+    margin-left: auto;
+    margin-right: auto;
+    width: 22px;
+    text-align: center;
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
+  .img-spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      animation: spin 2s linear infinite;
+  }
+}
+
+@media screen and (min-width: 2561px) and (max-width: 3840px) {
+  /* DataTable rows */
+  table.dataTable thead th,
+  table.dataTable thead td {
+    font-size: 20px;
+  }
+  table.dataTable tbody th,
+  table.dataTable tbody td {
+    padding: 2px 3px;
+    font-size: 18px;
+  }
+
+  /* stop signs */
+  img.stop {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-height: 24px;
+    max-width: 24px;
+    filter: grayscale(90%);
+  }
+  .img-loader {
+    display: none;
+    margin-left: auto;
+    margin-right: auto;
+    width: 24px;
+    text-align: center;
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
+  .img-spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 2s linear infinite;
+  }
+}
+
+@media screen and (min-width: 3841px) {
+  /* DataTable rows */
+  table.dataTable thead th,
+  table.dataTable thead td {
+    font-size: 22px;
+  }
+  table.dataTable tbody th,
+  table.dataTable tbody td {
+    padding: 2px 3px;
+    font-size: 20px;
+  }
+
+  /* stop signs */
+  img.stop {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-height: 26px;
+    max-width: 26px;
+    filter: grayscale(90%);
+  }
+  .img-loader {
+    display: none;
+    margin-left: auto;
+    margin-right: auto;
+    width: 26px;
+    text-align: center;
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
+  .img-spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      animation: spin 2s linear infinite;
+  }
+}
+
+
+
+
+
+
+/****** Novel concept suggestions list ******/
+
+/* colorful reminder box for selected original concept */
+div.selected-original-term {
+  padding-top: 7px;
+  padding-left: 5px;
+  padding-bottom: 0px;
+  padding-right: 5px;
+  background-color: #ffff55;
+  border: 3px solid #c0c0c0;
+  margin: 15px;
+}
+
+/* make small space between original term code and term text */
+span.dynamic-original-term-desc {
+  padding-left: 4px;
+}
+
+
+
+
+
+
+/****** IHTSDO Browser ******/
+
+/* external browser */
+div#embedded-externals {
+  padding-top: 15px;
+  display: none; /* hide by site-load (will be spawned through javascript) */
+}
+
+/* force maximum height (SVG forcibly changes page height to 2000px...) */
+.ihtsdo-details {
+  padding: 0px;
+  margin: 0;
+  height: 50vh;
+  max-height: 600px;
+}
+
+/* individual tabs in browser */
+.container {
+  max-height: 500px;
+  overflow-y: hidden;
+}
+
+/* make search filter heading a bit smaller */
+div#ihtsdo-search-searchBar2 .panel.panel-default .panel-heading h3 {
+  font-size: 18px;
+}
+
+/* remove extra air around search filters */
+.list-group-item {
+  padding-top: 1px;
+  padding-bottom: 1px;
+  border: 0;
+}
+
+/* make search results columns equal width */
+table.table.table-bordered {
+  table-layout: fixed;
+}
+
+
+
+
+
+
+/****** Progress bars ******/
+
+.progress {
+  position: relative;
+  margin-top: 10px;
+  height: 20px;
+  background-color: #bbbbbb;
+}
+
+#progress-text,
+#progress-text-sample {
+  position: absolute;
+  text-align: center;
+  line-height: 20px; /* line-height should be equal to bar height */
+  overflow: hidden;
+  right: 0;
+  left: 0;
+  top: 0;
+  padding-left: 5px;
+  padding-top: 1px;
+  color: #ffffff;
+}
+
+
+
+
+
+
+/****** Novel concept net graph visualisation ******/
+/* NOTE: not yet implemented */
+
+/*#graphdb-viz {
+    width: 90%;
+    height: 400px;
+    font: 9pt arial;
+}*/
+
+
+
+
+
+
+/****** Modals ******/
+
+/* background and invisible placeholder */
+.modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(0,0,0,0.7);
+  margin: 0 auto;
+}
+
+/* actual dialog placeholder */
+.modal-dialog {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0 auto;
+  padding: 0;
+  overflow-y: visible;
+  width: 80vw;
+  max-width: 80vw;
+}
+
+/* dialog content */
+.modal-content {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  /*border: 2px solid #3c7dcf;*/
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* header for dialog */
+.modal-header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 50px;
+  padding: 10px;
+  background: #6598d9;
+  border: 0;
+}
+
+/* title inside header */
+.modal-title {
+  font-weight: 300;
+  font-size: 1.6em;
+  color: #fff;
+  line-height: 30px;
+}
+
+/* main content */
+.modal-body {
+  position: absolute;
+  top: 50px;
+  bottom: 60px;
+  width: 100%;
+  font-weight: 300;
+  overflow: scroll; /* allows scrolling inside modal */
+  overflow-x: hidden;
+}
+
+/* footer for dialog */
+.modal-footer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 60px;
+  padding: 10px;
+  background: #f1f3f5;
+}
+
+/* mapped concept info headers in modal */
+div#mapped-concept-source-system,
+div#mapped-concept-target-system {
+  padding-bottom: 8px;
+}
+
+/* mapped concept info "buttons" in modal */
+div#mapped-concept-source,
+div#mapped-concept-target {
+  text-align: center;
+  padding-bottom: 5px;
+}

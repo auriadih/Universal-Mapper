@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block sisältö %}
+<div class="content-section">
+  <div class="contents">
+    <div class="intro-message">
+      <h1>{{ title }}</h1>
+      <hr class="intro-divider">
+      {% if current_user.is_authenticated %}
+        <h3>Tervetuloa takaisin, {{ current_user.first_name }} {{ current_user.last_name }}!</h3></br>
+        {% if source_systems %}
+        <div class="row" id="koodisto-painikkeet">
+          <div class="col-md-6">
+            <h4>Organisaatiosi sillattavat koodistot:</h4></br>
+            <div id="sillattavat-koodistot"></div>
+          </div>
+          <div class="col-md-6">
+            <h4>Mahdolliset kohdekoodistot:</h4></br>
+            <div id="mahdolliset-koodistot"></div>
+          </div>
+        </div>
+        {% else %}
+        <h4>Ei sillattavia koodistoja organisaatiossasi.</h4>
+        {% endif %}
+      {% else %}
+        <p>Kirjaudu sisään käyttääksesi sivuston toimintoja.</p>
+      {% endif %}
+      <hr class="intro-divider">
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+{% if source_systems %}
+var s = {{ source_systems|tojson|safe }}
+var BtnHtml = []
+for (var i = 0; i < s.length; i++) {
+  BtnHtml += "<button type='button' class='btn btn-info btn-lg' id='source-system-button-" + i + "'>"
+    + "<h5>" + s[i][0] + " (" + s[i][1] + ")<br>" + s[i][3] + " (" + s[i][2] + ")</h5></button>"
+}
+
+var Painikkeet = ''
+/* Populate buttons to users home page */
+$(function () {
+  Painikkeet = document.getElementById('sillattavat-koodistot')
+  Painikkeet.innerHTML += BtnHtml
+})
+{% endif %}
+
+$(document).ready(function () {
+  $('#sillattavat-koodistot > button').on('click', function (e) {
+    e.preventDefault()
+    var ClickedButton = $(this).attr('id').substring($(this).attr('id').lastIndexOf('-') + 1, $(this).attr('id').length)
+    $.post('_code_systems', { 'b': JSON.stringify(s[ClickedButton]) }).done(function (d) {
+      var s = d
+
+      var BtnHtml = []
+      for (var i = 0; i < s.length; i++) {
+        BtnHtml += "<button type='button' class='btn btn-info btn-lg' id='target-system-button-" + i + "'>"
+          + "<h5>" + s[i][0] + " (" + s[i][1] + ")<br>" + s[i][2] + "</h5></button>"
+      }
+
+      var Painikkeet = ''
+      /* Populate buttons to users home page */
+      $(function () {
+        Painikkeet = document.getElementById('mahdolliset-koodistot')
+        $(Painikkeet).empty()
+        Painikkeet.innerHTML += BtnHtml
+
+        $('#mahdolliset-koodistot > button').on('click', function (e) {
+          e.preventDefault()
+          var ClickedButton = $(this).attr('id').substring($(this).attr('id').lastIndexOf('-') + 1, $(this).attr('id').length)
+          $.post('_target_system', { 'b': JSON.stringify(s[ClickedButton]) }).done(function (d) {
+            window.location.href = d
+          })
+        })
+      })
+    })
+  })
+})
+</script>
+{% endblock %}
