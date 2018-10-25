@@ -1,11 +1,7 @@
 # Universal-Mapper
 Mapping tool for different standardized or 'in-house' code systems.
 
---
-
 ##### Currently in user feedback development phase
-
---
 
 #### Introduction 
 
@@ -15,15 +11,11 @@ There is a period of transition to newer graph-based coding system called Snomed
 
 This tool can be used with any other code system which consists of code and term pairs (concepts).
 
---
-
 #### Technologies
 
 This software is based on free license technology, mainly Apache 2.0. It is constructed on top of Python (3.x.x) using Flask framework with Jinja template engine, Werkzeug toolkit and SQLAlchemy ORM. Front-end is pure HTML5, CSS and JavaScript with JQuery, Bootstrap v4 and DataTables.
 
 [External Snomed-CT browser](https://github.com/IHTSDO/sct-browser-frontend) is borrowed from [IHTSDO](https://github.com/IHTSDO) and modified to work embedded on the site.
-
---
 
 #### Primary To-do's
 
