@@ -9,15 +9,15 @@
       <h1>{{ title }}</h1>
       <hr class="intro-divider">
       {% if current_user.is_authenticated %}
-        <h3>Tervetuloa takaisin, {{ current_user.first_name }} {{ current_user.last_name }}!</h3></br>
+        <h3>Tervetuloa takaisin, {{ current_user.first_name }} {{ current_user.last_name }}!</h3><br>
         {% if source_systems %}
         <div class="row" id="koodisto-painikkeet">
           <div class="col-md-6">
-            <h4>Organisaatiosi sillattavat koodistot:</h4></br>
+            <h4>Organisaatiosi sillattavat koodistot:</h4><br>
             <div id="sillattavat-koodistot"></div>
           </div>
           <div class="col-md-6">
-            <h4>Mahdolliset kohdekoodistot:</h4></br>
+            <h4>Mahdolliset kohdekoodistot:</h4><br>
             <div id="mahdolliset-koodistot"></div>
           </div>
         </div>
@@ -40,7 +40,7 @@ var s = {{ source_systems|tojson|safe }}
 var BtnHtml = []
 for (var i = 0; i < s.length; i++) {
   BtnHtml += "<button type='button' class='btn btn-info btn-lg' id='source-system-button-" + i + "'>"
-    + "<h5>" + s[i][0] + " (" + s[i][1] + ")<br>" + s[i][3] + " (" + s[i][2] + ")</h5></button>"
+    + "<h5>" + s[i][0] + " (" + s[i][1] + ")<br>" + s[i][3] + "</h5></button>"
 }
 
 var Painikkeet = ''

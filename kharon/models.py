@@ -1,5 +1,6 @@
 # import login library
 from flask_login import UserMixin
+from flask import session
 
 # import password hash library
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -9,6 +10,7 @@ from kharon import db, login_manager
 from sqlalchemy import ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 
 # schema name
 martti = 'code_mapper'
@@ -30,6 +32,8 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(60), index=True, unique=True)
     first_name = db.Column(db.String(60), index=True)
     last_name = db.Column(db.String(60), index=True)
+    default_source_dialect_id = db.Column(db.Integer)
+    default_destination_dialect_id = db.Column(db.Integer)
 
 	# add property to prevent accessing password column
     @property
@@ -183,6 +187,26 @@ class Dialect(db.Model):
 
 
 
+# suplementary code system info (view)
+class VDialect(db.Model):
+    __tablename__ = 'v_dialect'
+    __table_args__ = { 'schema': martti, 'extend_existing': True }
+
+    dialect_id = db.Column(db.Integer, primary_key=True)
+    dialect_name = db.Column(db.String)
+    is_official = db.Column(db.Boolean)
+    code_system_id = db.Column(db.Integer)
+    code_system_name = db.Column(db.String)
+    code_system_owner_organisation_id = db.Column(db.Integer)
+    code_system_owner_organisation_name = db.Column(db.String)
+
+    def __repr__(self):
+        return '<Dialect: {} ({}) for Code System: {}>'.format(self.dialect_name, self.dialect_id, self.code_system_name)
+
+
+
+
+
 # table for all terms (descriptions)
 class Terms(db.Model):
     __tablename__ = 'term'
@@ -284,8 +308,66 @@ class VConcepts(db.Model):
     first_obs_date = db.Column(db.DateTime)
     last_obs_date = db.Column(db.DateTime)
 
+    @hybrid_property
+    def status(self):
+        return object_session(self).scalar(select([func.code_mapper.get_concept_status(self.concept_id, session['user_id'], session['target_dialect_id'])]))
+
+    @status.expression
+    def status(self):
+        return func.code_mapper.get_concept_status(self.concept_id, session['user_id'], session['target_dialect_id'])
+
     def __repr__(self):
         return '<All details of Concept: {}>'.format(self.concept_id)
+
+
+
+
+
+
+# class for custom db function querying
+class default_query:
+	def query(retobj):
+		sel = "select "\
+			+ "'Huomio' as huom, "\
+			+ "coalesce(code_text,'') as code_text, "\
+			+ "coalesce(term_text,'') as term_text, "\
+			+ "coalesce(destination_code_text,'') as destination_code_text, "\
+			+ "coalesce(destination_term_text,'') as destination_term_text, "\
+			+ "coalesce(obs_number,1) as obs_number, "\
+			+ "coalesce(to_char(first_obs_date,'yyyy-mm-dd'),'') as first_obs_date, "\
+			+ "coalesce(to_char(last_obs_date,'yyyy-mm-dd'),'') as last_obs_date, "\
+			+ "coalesce(mapping_user,'') as mapping_user, "\
+			+ "coalesce(mapping_ts,'') as mapping_ts, "\
+			+ "coalesce(status,'') as status, "\
+			+ "coalesce(source_concept_id,-1) as source_concept_id, "\
+			+ "coalesce(user_concept_note,'') as user_concept_note"
+		fro = " from code_mapper.get_concept_statuses(" + str(session['user_id']) + "," + str(session['source_dialect_id']) + "," + str(session['target_dialect_id']) + ")"
+		if retobj == 'select':
+			return(sel)
+		elif retobj == 'from':
+			return(fro)
+		else:
+			return('something went wrong')
+
+
+
+
+
+
+# personal comments for concepts
+class Comments(db.Model):
+    __tablename__ = 'user_concept_note'
+    __table_args__ = { 'schema': martti, 'extend_existing': True }
+
+    # define columns properties
+    user_id = db.Column(db.Integer, primary_key=True)
+    concept_id = db.Column(db.Integer, primary_key=True)
+    note = db.Column(db.String)
+    insert_ts = db.Column(db.DateTime, server_default=func.now())
+    update_ts = db.Column(db.DateTime, onupdate=func.now())
+
+    def __repr__(self):
+        return '<Comment for Concept: {}>'.format(self.concept_id)
 
 
 

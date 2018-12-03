@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block sisältö %}
+<div class="content-section">
+  <div class="contents">
+    {% if current_user.is_authenticated %}
+
+      <!-- contents and functionality -->
+      <div id="contentCarousel" class="carousel slide">
+
+        <!-- sub-navigation -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+          <!-- SNOMED navigation -->
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <!-- static filtering -->
+            <ul class="navbar-nav">
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Organisaatio</a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="#">TYKS</a>
+                  <a class="dropdown-item" href="#">OYS</a>
+                  <a class="dropdown-item" href="#">HUS</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="#">Oma organisaatiosi</a>
+                </div>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Tallentaja</a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="#">Pertti Patologi</a>
+                  <a class="dropdown-item" href="#">Matti Mikroskooppi</a>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </nav>
+
+
+      </div>
+
+    <!-- Fallback if user is not logged in -->
+    {% else %}
+      <p>Kirjaudu sisään käyttääksesi sivuston toimintoja.</p>
+    {% endif %}
+  </div>
+</div>
+
+
+{% endblock %}

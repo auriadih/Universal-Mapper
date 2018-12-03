@@ -107,6 +107,11 @@ def login():
 				.filter(User.user_id == session['user_id'])\
 				.with_entities(Organisations.organisation_id)\
 				.scalar()
+			session['user_organisation_name'] = db.session.query(User, Organisations)\
+				.join(Organisations, Organisations.organisation_id == User.organisation_id)\
+				.filter(User.user_id == session['user_id'])\
+				.with_entities(Organisations.name)\
+				.scalar()
 
 			# add row to database using Session() db model
 			ses_start = curTime()

@@ -1,0 +1,341 @@
+<!-- {% import "bootstrap/utils.html" as utils %} -->
+
+{% extends "base.html" %}
+
+{% block head %}
+{% endblock %}
+
+{% block title %}Lähdekoodisto{% endblock %}
+
+{% block sisältö %}
+<div class="content-section">
+  <div class="contents">
+    {% if current_user.is_authenticated %}
+
+      <!-- Loading animation -->
+      <div class="loader">
+        <div class="center spinner" id="loading-animation"></div>
+      </div>
+
+      <!-- table container -->
+      <div class="original-placeholder">
+        <div class="help-text">
+          <p>Alla olevassa taulukossa näet organisaatiossasi käytössä olevat ja olleet 'koodi + termi' parit (konseptit). Konseptille näytetään niiden volyymi organisaatiossasi (N) ja aikajakso jolloin kyseinen konsepti on ollut käytössä, mikäli tiedot ovat olleet saatavissa.</p>
+        </div>
+
+        <!-- Filtering buttons -->
+        <nav class="navbar navbar-expand-lg navbar-light">
+          <div class="collapse navbar-collapse justify-content-end">
+            <ul class="navbar-nav" id="filtering-buttons">
+              <li class="nav-item"><button type="button" class="btn btn-sm btn-light" id="filter-table-light">Siltaamattomat</button></li>
+              <li class="nav-item"><button type="button" class="btn btn-sm btn-secondary" id="filter-table-secondary">Ehdotukset</button></li>
+              <li class="nav-item"><button type="button" class="btn btn-sm btn-success" id="filter-table-success">Valmiit</button></li>
+            </ul>
+          </div>
+        </nav>
+
+        <table id="original" class="table table-hover table-sm">
+          <thead class="thead-light">
+            <tr>
+              <th>Huom</th><th>Lähdekoodi</th><th>Lähdetermi</th><th>Kohdekoodi</th><th>Kohdetermi</th><th>N</th><th>Alkaen</th><th>Asti</th><th>Sillannut</th><th>Aikaleima</th><th>Konsepti</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody> <!-- populated with jQuery --> </tbody>
+        </table>
+      </div>
+
+      <div class="progress" id="progress-concepts">
+        <div class="progress-bar bg-secondary" id="progress-bridged" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+        <div class="progress-bar bg-success" id="progress-user" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+        <div id="progress-text"><p>Sillattu <span id="progress-mapped"></span> / <span id="progress-total"></span> konseptia</p></div>
+      </div>
+      <div class="progress" id="progress-samples">
+        <div class="progress-bar progress-bar-striped bg-secondary" id="progress-bridged-sample" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+        <div class="progress-bar progress-bar-striped bg-success" id="progress-user-sample" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+        <div id="progress-text-sample"><p>Sillattu <span id="progress-mapped-sample"></span> / <span id="progress-total-sample"></span> näytettä</p></div>
+      </div>
+
+    <!-- Fallback if user is not logged in -->
+    {% else %}
+      <p>Kirjaudu sisään käyttääksesi sivuston toimintoja.</p>
+    {% endif %}
+  </div>
+</div>
+
+
+
+<script>
+/* update progress bars */
+function summarizeTable (table) {
+  if (table) {
+    var UserConcepts = table.rows('.table-success').count() || 0
+    var BridgedConcepts = table.rows('.table-secondary').count() || 0
+    var TotalConcepts = table.rows().count() || 0
+    var UserPercent = UserConcepts / TotalConcepts * 100 || 0
+    var BridgedPercent = BridgedConcepts / TotalConcepts * 100 || 0
+    if (table.column(3).data()) {
+      var UserSamples = table.cells('.table-success', 5).data().reduce((a, b) => Number(a) + Number(b), 0)
+      var BridgedSamples = table.cells('.table-secondary', 5).data().reduce((a, b) => Number(a) + Number(b), 0)
+      var TotalSamples = table.column(5).data().reduce((a, b) => Number(a) + Number(b), 0)
+      var UserSamplePercent = UserSamples / TotalSamples * 100 || 0
+      var BridgedSamplePercent = BridgedSamples / TotalSamples * 100 || 0
+    }
+
+    $('#progress-user').attr('aria-valuenow', UserPercent).css('width', UserPercent + '%')
+    $('#progress-bridged').attr('aria-valuenow', BridgedPercent).css('width', BridgedPercent + '%')
+    $('div#progress-text p span#progress-mapped').empty().append(UserConcepts + BridgedConcepts) /* + UserOrgConcepts + OtherConcepts + RejectedConcepts */
+    $('div#progress-text p span#progress-total').empty().append(TotalConcepts)
+
+    $('#progress-user-sample').attr('aria-valuenow', UserSamplePercent).css('width', UserSamplePercent + '%')
+    $('#progress-bridged-sample').attr('aria-valuenow', BridgedSamplePercent).css('width', BridgedSamplePercent + '%')
+    $('div#progress-text-sample p span#progress-mapped-sample').empty().append(UserSamples + BridgedSamples) /* + UserOrgSamples + OtherSamples + RejectedSamples */
+    $('div#progress-text-sample p span#progress-total-sample').empty().append(TotalSamples)
+  }
+}
+
+
+
+
+
+
+/* TODO: check original table rows if contains certain value */
+function checkTableRows (tableid, d) {
+  /* add tooltips if concept is commented */
+  var tooltips
+  $.get('_commenting').done(function (res) {
+    tooltips = res
+
+    if (d !== 0) {
+      var User = []
+      var UserT = []
+      var i
+      for (i = 0; i < d[0].length; i++) {
+        User.push(d[0][i]['code_text'])
+        UserT.push(d[0][i]['term_text'])
+      }
+
+      var h
+      var cid = []
+      var note = []
+      for (h = 0; h < tooltips['comments'].length; h++) {
+        cid.push(tooltips['comments'][h]['concept_id'])
+        note.push(tooltips['comments'][h]['note'])
+      }
+    }
+  })
+}
+
+
+
+
+
+
+function OneSelected (Target) {
+  if (Target.hasClass('selected')) {
+    Target.removeClass('selected')
+  } else {
+    Target.parent().find('tr.selected').removeClass('selected')
+    Target.addClass('selected')
+  }
+}
+
+
+
+
+
+
+$(document).ready(function () {
+  /* make tables nicer with jQuery DataTable */
+  $('#original').DataTable({
+    processing: true,
+    serverSide: true,
+    deferRender: true,
+    sServerMethod: 'POST',
+    sAjaxSource: '/_terms',
+    columns: [
+      { data: "Huom" },
+      { data: "Lähdekoodi" },
+      { data: "Lähdetermi" },
+      { data: "Kohdekoodi" },
+      { data: "Kohdetermi" },
+      { data: "N" },
+      { data: "Alkaen" },
+      { data: "Asti" },
+      { data: "Sillannut" },
+      { data: "Aikaleima" },
+      { data: "Status" },
+      { data: "Concept ID" },
+      { data: "Note" }
+    ],
+    'order': [[ 5, 'desc' ]],
+    stateSave: false,
+    'search': { 'regex': true },
+    'pageLength': 25,
+    'language': { 'url': "{{ url_for('static', filename='js/akheron/Finnish.json') }}" },
+    select: {
+      style: 'os',
+      selector: 'td:first-child'
+    },
+    'columnDefs': [{
+      'targets': [10, 11, 12],
+      'visible': false,
+      'searchable': false
+    }, {
+      'targets': [0, 1, 5, 6, 7, 9],
+      'searchable': false
+    }],
+    "createdRow": function (row, data, dataIndex, cells) {
+      if (data['Status'] == 'bridge') {
+        $(row).addClass('table-secondary')
+      }
+      else if (data['Status'] == 'self') {
+        $(row).addClass('table-success')
+      }
+      else if (data['Status'] == 'own_organisation') {
+        $(row).addClass('table-info')
+      }
+      else {
+        $(row).addClass('table-light')
+      }
+
+      if (data['Note'] != '') {
+        $(cells[0]).css('color', '#ff0000').html("<span rel='tooltip' data-placement='left' data-original-title='" + data['Note'] + "'>" + $(cells[0]).html() + "</span>")
+      }
+    },
+    "fnInitComplete": function (oSettings, json) {
+      /* count mappings */
+      oSettings.fnDrawCallback = summarizeTable($('#original').DataTable())
+
+      /* activate tooltips */
+      $("[rel='tooltip']").tooltip({ html: true, delay: { show: 0, hide: 100 } })
+    }
+  })
+
+
+
+
+
+
+  /* neat loading animation */
+  var table = $('#original').DataTable()
+  table.on('draw', function () {
+    $('div.loader').css({ opacity: 0, transition: 'opacity 0.5s' }).slideUp(1000)
+    $('div.original-placeholder').slideDown(1000)
+  })
+
+
+
+
+
+
+
+
+
+  $('#original tbody').on('click', 'tr.table-light', function (e) {
+    e.preventDefault()
+    var concept_id = $('#original').DataTable().row($(this)).data()['Concept ID']
+
+    if ($(e.target).index() === 0) {
+      window.location.href = '/add_note/' + concept_id
+    } else {
+      window.location.href = '/novel_terms/' + concept_id
+    }
+  })
+
+
+
+
+
+
+
+  /* filtering buttons */
+  $('#filtering-buttons > li > button').click(function () {
+    /* disable button for a moment to prevent double-clicking */
+    var Btns = $('#filtering-buttons > li > button')
+    for (var i = 0; i < Btns.length; i++) {
+      $(Btns[i]).prop('disabled', true)
+      setTimeout(function (btn) { btn.prop('disabled', false) }, 800, $(Btns[i]))
+    }
+
+    /* catch DOM */
+    var tabl = $('#original').DataTable()
+    var ClickedId = $(this).attr('id')
+    var hiddenRow = {}
+
+    /* if filter is active, deactivate filtering */
+    if ($(this).hasClass('active')) {
+      $(this).removeClass('active')
+      $.fn.dataTable.ext.search.pop()
+
+      /* find out current position on table before redrawing */
+      if (!tabl.rows({ page: 'current' })[0][0]) {
+        var toprow = hiddenRow.hideRows
+      }
+      else if (!toprow) {
+        var toprow = tabl.rows({ page: 'current' })[0][0]
+      }
+
+      /* apply un-filtering and update table */
+      tabl.draw()
+
+      /* check if top row is still on visible page of redrawn filtered table, otherwise navigate to that page */
+      if (tabl.rows({ page: 'current' })[0].indexOf(toprow) === -1) {
+        tabl.page(tabl.rows()[0].indexOf(toprow) / tabl.page.info().length).draw('page')
+      }
+    } else {
+      /* if filter is not active, activate filtering */
+      $(this).parent().parent().find('button.active').removeClass('active')
+      $(this).addClass('active')
+
+      /* which rows are currently visible */
+      var visibleRows = $(tabl.rows({ page: 'current' }).nodes())
+      var rowIndices = tabl.rows({ page: 'current' })[0]
+
+      /* loop through rows and find first filter-matching value */
+      for (i = 0; i < visibleRows.length; i++) {
+        if ($(visibleRows[i]).hasClass(ClickedId.replace('filter-',''))) {
+          /* take index of filter-matching row */
+          var toprow = rowIndices[i]
+          hiddenRow.hideRows = rowIndices[i]
+
+          /* stop looping */
+          break
+        }
+      }
+
+      /* actual filtering and table re-draw */
+      $.fn.dataTable.ext.search.pop()
+      $.fn.dataTable.ext.search.push(
+        function(settings, data, dataIndex) {
+          if (settings.nTable.id === 'original') {
+            return $(tabl.row(dataIndex).node()).hasClass(ClickedId.replace('filter-','')) ? true : false;
+          }
+          else {
+            return true
+          }
+        }
+      )
+      tabl.draw()
+
+      /* check if table is empty or not and update top row indice */
+      if (!tabl.rows({ page: 'current' })[0][0]) {
+        var toprow = hiddenRow.hideRows
+      } else if (!toprow) {
+        /* if table has rows, but visible page before filtering did not contain any filter-matching rows, then take index of first row on whole table */
+        var toprow = tabl.rows({ page: 'current' })[0][0]
+      }
+
+      /* check if filter-matching row is still on visible page, otherwise navigate to that page */
+      if (tabl.rows({ page: 'current' })[0].indexOf(toprow) === -1) {
+        tabl.page(tabl.rows({ search: 'applied' })[0].indexOf(toprow) / tabl.page.info().length).draw('page')
+      }
+    }
+
+    /* remove focus from button due mouse click */
+    $(this).blur()
+  })
+})
+
+</script>
+
+{% endblock %}

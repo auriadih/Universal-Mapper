@@ -7479,7 +7479,7 @@ function conceptDetails(divElement, conceptId, options) {
         }
         // xhr = $.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + panel.conceptId, function (result) {
         /* TEMP: fix for non-HTTPS Snomed API */
-        xhr = $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + panel.conceptId }).done(function (result) {
+        xhr = $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + panel.conceptId }).done(function (result) {
 
           //}).done(function (result) {
             var firstMatch = result;
@@ -7895,7 +7895,7 @@ function conceptDetails(divElement, conceptId, options) {
                                         $("#" + panel.divElement.id + "-modal-body").html("<i class='glyphicon glyphicon-refresh icon-spin'></i>");
                                         // xhr = $.getJSON(options.serverUrl.replace("snomed", "") + "server/releases", function (result) {
                                         /* TEMP: fix for non-HTTPS Snomed API */
-                                        xhr = $.post("_api_fetcher", { "urli": options.serverUrl.replace("snomed", "") + "server/releases" }).done(function (result) {
+                                        xhr = $.post("/_api_fetcher", { "urli": options.serverUrl.replace("snomed", "") + "server/releases" }).done(function (result) {
 
                                             // nothing
                                         //}).done(function (result) {
@@ -8539,7 +8539,7 @@ function conceptDetails(divElement, conceptId, options) {
         }
         //xhrChildren = $.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + panel.conceptId + "/children?form=" + panel.options.selectedView, function (result) {
         /* TEMP: fix for non-HTTPS Snomed API */
-        xhrChildren = $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + panel.conceptId + "/children?form=" + panel.options.selectedView }).done(function (result) {
+        xhrChildren = $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + panel.conceptId + "/children?form=" + panel.options.selectedView }).done(function (result) {
 
 
             //$.getJSON(panel.url + "rest/browser/concepts/" + panel.conceptId + "/children", function(result) {
@@ -8667,7 +8667,7 @@ function conceptDetails(divElement, conceptId, options) {
         }
 
                 /* TEMP: fix for non-HTTPS Snomed API */
-                xhrReferences = $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/references?form=" + panel.options.selectedView }).done(function (result) {
+                xhrReferences = $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/references?form=" + panel.options.selectedView }).done(function (result) {
 
         // xhrReferences = $.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/references?form=" + panel.options.selectedView, function(result) {
 
@@ -8764,7 +8764,7 @@ function conceptDetails(divElement, conceptId, options) {
 
 
         /* TEMP: fix for non-HTTPS Snomed API */
-        xhrChildren = $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/children?form=" + panel.options.selectedView }).done(function (result) {
+        xhrChildren = $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/children?form=" + panel.options.selectedView }).done(function (result) {
 
         //xhrChildren = $.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/children?form=" + panel.options.selectedView, function(result) {
         //}).done(function(result) {
@@ -8847,7 +8847,7 @@ function conceptDetails(divElement, conceptId, options) {
 
 
         /* TEMP: fix for non-HTTPS Snomed API */
-        xhrParents = $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/parents?form=" + panel.options.selectedView }).done(function (result) {
+        xhrParents = $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/parents?form=" + panel.options.selectedView }).done(function (result) {
 
 
         //xhrParents = $.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/parents?form=" + panel.options.selectedView, function(result) {
@@ -8953,7 +8953,7 @@ function conceptDetails(divElement, conceptId, options) {
 
 
                 /* TEMP: fix for non-HTTPS Snomed API */
-                xhrMembers = $.post("_api_fetcher", { "urli": membersUrl }).done(function (result) {
+                xhrMembers = $.post("/_api_fetcher", { "urli": membersUrl }).done(function (result) {
         //xhrMembers = $.getJSON(membersUrl, function(result){
 
         //}).done(function(result){
@@ -9249,7 +9249,7 @@ function conceptDetails(divElement, conceptId, options) {
 
 
                     /* TEMP: fix for non-HTTPS Snomed API */
-                    xhr = $.post("_api_fetcher", { "urli": options.serverUrl.replace("snomed", "") + "server/releases" }).done(function (result) {
+                    xhr = $.post("/_api_fetcher", { "urli": options.serverUrl.replace("snomed", "") + "server/releases" }).done(function (result) {
 
 
           //  xhr = $.getJSON(options.serverUrl.replace("snomed", "") + "server/releases", function (result) {
@@ -9588,7 +9588,7 @@ function drawConceptDiagram (concept, div, options, panel) {
 
         /* TEMP: fix for non-HTTPS Snomed API */
         /* NOTE: if a user wants diagram as PNG, a user can take a screenshot for Gods sake... */
-        //$.post("_api_fetcher", { "urli": options.serverUrl.replace("snomed", "") + "util/svg2png", "args": JSON.stringify({
+        //$.post("/_api_fetcher", { "urli": options.serverUrl.replace("snomed", "") + "util/svg2png", "args": JSON.stringify({
           //  "svgContent": svgCode
         //}) }).done(function (response) {
 
@@ -10998,7 +10998,7 @@ function searchPanel(divElement, options) {
                         // Search conceptId
 
                         /* TEMP: fix for non-HTTPS Snomed API */
-                        xhr = $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + t }).done(function (result) {
+                        xhr = $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + t }).done(function (result) {
 
                         //xhr = $.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + t,function (result) {
 
@@ -11070,7 +11070,7 @@ function searchPanel(divElement, options) {
                     } else if (t.substr(-2, 1) == "1") {
 
                       /* TEMP: fix for non-HTTPS Snomed API */
-                      xhr = $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/descriptions/" + t }).done(function (result) {
+                      xhr = $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/descriptions/" + t }).done(function (result) {
 
                         //xhr = $.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/descriptions/" + t,function (result) {
 
@@ -11149,7 +11149,7 @@ function searchPanel(divElement, options) {
                     //console.log(searchUrl);
 
                             /* TEMP: fix for non-HTTPS Snomed API */
-                            xhr = $.post("_api_fetcher", { "urli": searchUrl }).done(function (result) {
+                            xhr = $.post("/_api_fetcher", { "urli": searchUrl }).done(function (result) {
 
                     // xhr = $.getJSON(searchUrl,function (result) {
 
@@ -11948,7 +11948,7 @@ function taxonomyPanel(divElement, conceptId, options) {
 
 
       /* TEMP: fix for non-HTTPS Snomed API */
-      $.post("_api_fetcher", { "urli": options.serverUrl.replace("snomed", "expressions/") + options.edition + "/" + options.release + "/execute/brief", "args": JSON.stringify({
+      $.post("/_api_fetcher", { "urli": options.serverUrl.replace("snomed", "expressions/") + options.edition + "/" + options.release + "/execute/brief", "args": JSON.stringify({
           "expression": "< 138875005|SNOMED CT Concept|",
           "limit": 1,
           "skip": 0,
@@ -12327,7 +12327,7 @@ function taxonomyPanel(divElement, conceptId, options) {
                 if (typeof selectedId != "undefined") {
 
                     /* TEMP: fix for non-HTTPS Snomed API */
-                    $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + selectedId + "/parents?form=" + panel.options.selectedView }).done(function (result) {
+                    $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + selectedId + "/parents?form=" + panel.options.selectedView }).done(function (result) {
 
                     // $.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + selectedId + "/parents?form=" + panel.options.selectedView, function(result) {
                         // done
@@ -12402,7 +12402,7 @@ function taxonomyPanel(divElement, conceptId, options) {
 
 
           /* TEMP: fix for non-HTTPS Snomed API */
-          $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/children?form=" + panel.options.selectedView }).done(function (result) {
+          $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/children?form=" + panel.options.selectedView }).done(function (result) {
 
 
         // $.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/children?form=" + panel.options.selectedView, function(result) {
@@ -12505,7 +12505,7 @@ function taxonomyPanel(divElement, conceptId, options) {
 
 
           /* TEMP: fix for non-HTTPS Snomed API */
-          $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/parents?form=" + panel.options.selectedView }).done(function (result) {
+          $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/parents?form=" + panel.options.selectedView }).done(function (result) {
 
         //$.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/parents?form=" + panel.options.selectedView, function(parents) {
             // done
@@ -12620,7 +12620,7 @@ function taxonomyPanel(divElement, conceptId, options) {
         $("#" + panel.divElement.id + "-panelBody").html("<i class='glyphicon glyphicon-refresh icon-spin'></i>");
 
                 /* TEMP: fix for non-HTTPS Snomed API */
-                $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/parents?form="+panel.options.selectedView }).done(function (result) {
+                $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/parents?form="+panel.options.selectedView }).done(function (result) {
 
         // $.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId + "/parents?form="+panel.options.selectedView, function(result) {
             // done
@@ -12632,7 +12632,7 @@ function taxonomyPanel(divElement, conceptId, options) {
             if (typeof term == "undefined" || typeof statedDescendants == "undefined"){
 
                         /* TEMP: fix for non-HTTPS Snomed API */
-                        $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId }, function(res){
+                        $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId }, function(res){
 
                 // $.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId, function(res){
                     term = res.defaultTerm;
@@ -12789,7 +12789,7 @@ function taxonomyPanel(divElement, conceptId, options) {
         }
 
         /* TEMP: fix for non-HTTPS Snomed API */
-        xhr = $.post("_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId }).done(function (result) {
+        xhr = $.post("/_api_fetcher", { "urli": options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId }).done(function (result) {
 
         // xhr = $.getJSON(options.serverUrl + "/" + options.edition + "/" + options.release + "/concepts/" + conceptId, function(result) {
             if (typeof result.statedDescendants == "undefined") $("#" + panel.divElement.id + "-txViewLabel2").closest("li").hide();
@@ -12950,7 +12950,7 @@ function refsetPanel(divElement, options) {
             //console.log("aborting call...");
         }
         /* TEMP: fix for non-HTTPS Snomed API */
-        xhrMembers = $.post("_api_fetcher", { "urli": membersUrl }).done(function (result) {
+        xhrMembers = $.post("/_api_fetcher", { "urli": membersUrl }).done(function (result) {
 
 
       //  xhrMembers = $.getJSON(membersUrl, function(result){
@@ -13468,7 +13468,7 @@ function queryComputerPanel(divElement, options) {
         if (!panel.typeArray || !panel.typeArray.length){
 
           /* TEMP: fix for non-HTTPS Snomed API */
-          $.post("_api_fetcher", { "urli": options.serverUrl.replace("snomed", "expressions/") + options.edition + "/" + options.release + "/execute/brief", "args": JSON.stringify({
+          $.post("/_api_fetcher", { "urli": options.serverUrl.replace("snomed", "expressions/") + options.edition + "/" + options.release + "/execute/brief", "args": JSON.stringify({
               "expression": "< 410662002|Concept model attribute (attribute)|",
               "limit": 5000,
               "skip": 0,
@@ -14019,7 +14019,7 @@ function queryComputerPanel(divElement, options) {
 
 
                 /* TEMP: fix for non-HTTPS Snomed API */
-                $.post("_api_fetcher", { "urli": executeUrl }).done(function (result) {
+                $.post("/_api_fetcher", { "urli": executeUrl }).done(function (result) {
 
                 //$.getJSON(executeUrl, function (result) {
                     //$.getJSON(panel.url + "rest/browser/concepts/" + panel.conceptId + "/children", function(result) {
@@ -14095,7 +14095,7 @@ function queryComputerPanel(divElement, options) {
 
               /* TEMP: fix for non-HTTPS Snomed API */
               var lr = panel.lastRequest
-              xhrTotal = $.post("_api_fetcher", { "urli": options.serverUrl.replace("snomed", "expressions/") + options.edition + "/" + options.release + "/execute/brief", "args": JSON.stringify({ lr })
+              xhrTotal = $.post("/_api_fetcher", { "urli": options.serverUrl.replace("snomed", "expressions/") + options.edition + "/" + options.release + "/execute/brief", "args": JSON.stringify({ lr })
             }).done(function (result) {
                 xhrTotal = null;
                 panel.allResults = result.computeResponse.matches;
@@ -14472,7 +14472,7 @@ function queryComputerPanel(divElement, options) {
 
 
                   /* TEMP: fix for non-HTTPS Snomed API */
-                  var xhrExecute2 = $.post("_api_fetcher", { "urli": options.serverUrl.replace("snomed", "expressions/") + options.edition + "/" + options.release + "/execute/brief", "args": JSON.stringify({ data })
+                  var xhrExecute2 = $.post("/_api_fetcher", { "urli": options.serverUrl.replace("snomed", "expressions/") + options.edition + "/" + options.release + "/execute/brief", "args": JSON.stringify({ data })
                 }, function(result) {
                     if (result.paserResponse.validation) {
                         data = result.computeResponse;

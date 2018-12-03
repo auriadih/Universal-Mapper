@@ -4,60 +4,38 @@
 <head>
   <title>Kharon - {% if title %}{{ title }}{% endif %} | Universal Mapper Tool</title>
 
-  {% block head %}
+  <!-- JQuery -->
   <script src="{{ url_for('static', filename='js/akheron/jquery-3.3.1.js') }}"></script>
   <script src="{{ url_for('static', filename='js/akheron/jquery-ui.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/jquery.svg.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/lodash.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/clipboard.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/conduit.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/postal.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/notify.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/excellentexport.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/handlebars-v1.3.0.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/base64.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/jquery.i18n.properties-1.0.9.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/ZeroClipboard.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/jquery.history.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/util.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/jquery.splitter-0.14.0.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/countryIcons.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/svgdiagrammingv2.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/drawConceptDiagram.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/searchPlugin.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/taxonomyPlugin.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/favoritesPlugin.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/queryPlugin.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/refsetPlugin.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/conceptExpressions.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/conceptDetailsPlugin.js') }}"></script>
+  <!--<script src="{{ url_for('static', filename='js/akheron/popover-extra-placements.js') }}"></script>-->
+
+  <!-- Bootstrap -->
   <script src="{{ url_for('static', filename='js/akheron/popper.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/popover.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/jlayout.border.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/jquery.layout-1.2.0.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/jquery.sizes.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/tooltip.js') }}"></script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/snomed-interaction-components-1.36.4.css') }}">
-  <script src="{{ url_for('static', filename='js/akheron/snomed-interaction-components-1.36.4.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/bootstrap-tooltip.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/popover-extra-placements.js') }}"></script>
   <script src="{{ url_for('static', filename='js/akheron/bootstrap.js') }}"></script>
   <link href="{{ url_for('static', filename='css/bootstrap4.css') }}" rel="stylesheet">
+
+  <!-- DataTables -->
   <script src="{{ url_for('static', filename='js/akheron/jquery.dataTables.min.js') }}"></script>
   <link href="{{ url_for('static', filename='css/jquery.dataTables.min.css') }}" rel="stylesheet">
   <script src="{{ url_for('static', filename='js/akheron/dataTables.scroller.min.js') }}"></script>
   <link href="{{ url_for('static', filename='css/scroller.dataTables.min.css') }}" rel="stylesheet">
+  <script src="{{ url_for('static', filename='js/akheron/dataTables.rowGroup.min.js') }}"></script>
+  <link href="{{ url_for('static', filename='css/rowGroup.dataTables.min.css') }}" rel="stylesheet">
   <script src="{{ url_for('static', filename='js/akheron/row().show().js') }}"></script>
-  <script src="{{ url_for('static', filename='js/akheron/neovis.js') }}"></script>
+
+  <!-- Styling -->
   <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
   <script src="{{ url_for('static', filename='js/akheron/fontawesome-all.js') }}"></script>
-  <link href="//fonts.googleapis.com/css?family=Montserrat|Quattrocento+Sans|Noto+Sans|Lato" rel="stylesheet" type="text/css">
-  {% endblock %}
+  <link href="//fonts.googleapis.com/css?family=Inconsolata|Fira+Mono" rel="stylesheet" type="text/css">
+
+  <!-- Tooltips -->
+  <script src="{{ url_for('static', filename='js/akheron/tooltip.js') }}"></script>
+  {% block head %}{% endblock %}
 </head>
 
 <body>
   <!-- navigation bar, on top of page -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top" id="topnav">
     <div class="collapse navbar-collapse">
 
       <!-- top-left navigation -->
@@ -67,8 +45,9 @@
         </li>
   	    {% if current_user.is_authenticated %}
         <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('browser.select_codesystem')}}">Koodistot</a>
+          <a class="nav-link" href="{{ url_for('browser.select_codesystem')}}">Valitse koodistot</a>
         </li>
+        {% block navi %}{% endblock %}
         <!-- NOTE: not yet implemented
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('browser.stats') }}">Tilastot</a>
@@ -92,10 +71,10 @@
       <ul class="navbar-nav">
         {% if current_user.is_authenticated %}
         <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('auth.logout') }}">Kirjaudu ulos</a>
+          <i class="fa fa-user"></i>  Hei, {{ current_user.first_name }} {% if user_org_name %}({{ user_org_name }}){% endif %}!
         </li>
         <li class="nav-item">
-          <i class="fa fa-user"></i>  Hei, {{ current_user.first_name }}!
+          <a class="nav-link" href="{{ url_for('auth.logout') }}">Kirjaudu ulos</a>
         </li>
         {% else %}
         <!-- <li class="nav-item">
@@ -125,14 +104,21 @@
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('browser.homepage') }}">Etusivu</a>
         </li>
-  	    {% if current_user.is_authenticated %}
+      </ul>
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <span class="nav-text">Versio 2018-11-21 "GET TO THE CHOPPA!"</span>
+        </li>
+      </ul>
+	    {% if current_user.is_authenticated %}
 
-        {% else %}
+      {% else %}
+      <ul class="navbar-nav mr-auto">
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('auth.login') }}">Kirjaudu sisään</a>
         </li>
-        {% endif %}
       </ul>
+      {% endif %}
 
       <!-- bottom-right navigation -->
       <ul class="navbar-nav">

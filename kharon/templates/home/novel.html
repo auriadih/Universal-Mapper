@@ -1,0 +1,520 @@
+<!-- {% import "bootstrap/utils.html" as utils %} -->
+
+{% extends "base.html" %}
+
+{% block head %}
+<!-- required for snomed-interaction-components external libs -->
+<script src="{{ url_for('static', filename='js/akheron/ZeroClipboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/base64.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/clipboard.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/conduit.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/excellentexport.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/handlebars-v1.3.0.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/jlayout.border.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/jquery.history.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/jquery.i18n.properties-1.0.9.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/jquery.layout-1.2.0.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/jquery.sizes.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/jquery.svg.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/lodash.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/notify.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/postal.js') }}"></script>
+
+<!-- required for snomed-interaction-components internal libs -->
+<script src="{{ url_for('static', filename='js/akheron/conceptDetailsPlugin.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/conceptExpressions.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/countryIcons.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/drawConceptDiagram.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/favoritesPlugin.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/jquery.splitter-0.14.0.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/tooltip.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/queryPlugin.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/refsetPlugin.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/searchPlugin.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/svgdiagrammingv2.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/taxonomyPlugin.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/util.js') }}"></script>
+
+<!-- snomed-interaction-components -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/snomed-interaction-components-1.36.4.css') }}">
+<script src="{{ url_for('static', filename='js/akheron/snomed-interaction-components-1.36.4.js') }}"></script>
+
+<!-- Popovers and tooltips -->
+<script src="{{ url_for('static', filename='js/akheron/popover.js') }}"></script>
+<script src="{{ url_for('static', filename='js/akheron/bootstrap-tooltip.js') }}"></script>
+
+<!-- NEO4J visualisation -->
+<!-- <script src="{{ url_for('static', filename='js/akheron/neovis.js') }}"></script> -->
+{% endblock %}
+
+{% block title %}Kohdekoodisto{% endblock %}
+
+{% block sisältö %}
+<div class="content-section">
+  <div class="contents">
+    {% if current_user.is_authenticated %}
+
+    <!-- Loading animation -->
+    <div class="novel-loader">
+      <div class="center spinner" id="loading-animation"></div>
+    </div>
+
+    <div class="novel-placeholder">
+      <div class="help-text">
+        <p>Valitse alla olevasta taulukosta se kohdekonsepti ("Uusi koodi" ja "Uusi termi" -pari), joka mielestäsi vastaa organisaatiossasi käytettyä konseptia, jota olet siltaamassa.</p>
+      </div>
+      <div class="row">
+        <div class="selected-original-term"><h5>Olet siltaamassa organisaatiosi konseptia: {{ info[0][0] }} {{ info[0][1] }} (N={{ info[0][2] }})</h5></div>
+      </div>
+      <table id="novel" class="table table-hover table-sm">
+        <thead class="thead-light">
+          <tr>
+            <th>Uusi koodi</th><th>Uusi konsepti</th><th>Uusi murre</th><th>Uusi konsepti-ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in data %}
+            <tr class="table-light">
+              <td class="newcode">{{ row.destination_code_text }}</td>
+              <td class="newterm">{{ row.destination_term_text }}</td>
+              <td class="dialect">{{ row.destination_dialect_name }}</td>
+              <td class="concept-id">{{ row.destination_concept_id }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- embedded external components -->
+      {% if target == 'Snomed CT' %}
+        <div class="help-text">
+          <p>Voit myös etsiä manuaalisesti sopivaa kohdekonseptia käyttämällä IHTSDO:n upotettua selainta.</p>
+        </div>
+        <div class="row" id="embedded-externals">
+          <div class="col-sm-12">
+            <nav class="navbar navbar-expand-lg navbar-light">
+              <div class="collapse navbar-collapse">
+
+                <!-- Browser tabs -->
+                <ul class="nav nav-tabs mr-auto" role="tablist" id="ihtsdo-tabs">
+                  <!-- <li class="nav-item"><a href="#neo4j-visu-tab" class="nav-link" data-toggle="tab" aria-expand="true">NEO4J</a></li> -->
+                  <li class="nav-item"><a href="#ihtsdo-taxonomy-tab" class="nav-link" data-toggle="tab" aria-expand="true">Taxonomy</a></li>
+                  <li class="nav-item active"><a href="#ihtsdo-details-tab" class="nav-link active show" data-toggle="tab" aria-expand="true">Details</a></li>
+                  <li class="nav-item"><a href="#ihtsdo-search-tab" class="nav-link" data-toggle="tab" aria-expand="true">Manual Search</a></li>
+                </ul>
+
+                <!-- Link to external browser -->
+                <ul class="navbar-nav" id="route-to-external-buttons">
+                  <li class="nav-item"><a id="ihtsdo_browser_link" target='_blank'><button type="button" class="btn btn-light" id="goto-external-browser">IHTSDO Browser (external)</button></a></li>
+                </ul>
+              </div>
+            </nav>
+
+            <div id="ihtsdo_browser" class="ihtsdo-browser">
+              <div class="tab-content">
+                <!-- NOTE: not yet implemented -->
+                <!-- <div class="tab-pane" id="neo4j-visu-tab"><div id="graphdb-viz"></div></div> -->
+                <div class="tab-pane" id="ihtsdo-taxonomy-tab"><div id="ihtsdo-taxonomy"></div></div>
+                <div class="tab-pane active" id="ihtsdo-details-tab"><div id="ihtsdo-details"></div></div>
+                <div class="tab-pane" id="ihtsdo-search-tab"><div id="ihtsdo-search"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="novel-similars-loader">
+        <div class="center spinner" id="loading-animation"></div>
+      </div>
+
+      <div class="novel-similars-placeholder">
+        <div id="novel-similars-block">
+          <h5>Samankaltaisia koodeja ja termejä alkuperäisessä (organisaatiosi) koodistossa:</h5>
+          <!--<table id='novel_similar_concepts' class='table table-hover table-sm'>
+            <thead class='thead-light'>
+              <tr><th>Huom</th><th>Organisaatiosi koodi</th><th>Organisaatiosi termi</th><th>N</th><th>Alkaen</th><th>Asti</th></tr>
+            </thead>
+            <tbody>
+              {% for sim in simi %}
+                <tr class="table-light">
+                  <td class="huomio">Huomio</td>
+                  <td class="oldcode">{{ sim.code_text }}</td>
+                  <td class="oldterm">{{ sim.term_text }}</td>
+                  <td class="n">{{ sim.obs_number }}</td>
+                  <td class="alkaen">{{ sim.first_obs_date }}</td>
+                  <td class="asti">{{ sim.last_obs_date }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>-->
+
+          <table id="novel_similar_concepts" class="table table-hover table-sm">
+            <thead class="thead-light">
+              <!--<tr><th>Huom</th><th>Organisaatiosi koodi</th><th>Organisaatiosi termi</th><th>N</th><th>Alkaen</th><th>Asti</th></tr>-->
+              <tr>
+                <th>Huom</th><th>Lähdekoodi</th><th>Lähdetermi</th><th>Kohdekoodi</th><th>Kohdetermi</th><th>N</th><th>Alkaen</th><th>Asti</th><th>Sillannut</th><th>Aikaleima</th><th>Konsepti</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody> <!-- populated with jQuery --> </tbody>
+          </table>
+
+
+
+          <h5>Valitse näistä ne, jotka haluat liittää valittuun kohdekoodiston kohdekonseptiin.</h5>
+        </div>
+      </div>
+
+      <div class="row" id="save-buttons">
+        <div class="selected-original-term"><h5>Olet siltaamassa organisaatiosi konseptia: {{ info[0][0] }} {{ info[0][1] }} (N={{ info[0][2] }})</h5></div>
+        <div class="col-sm-12">
+          <button type="button" class="btn btn-secondary disabled" id="tallenna">Hyväksy siltaus</button>
+          <button type="button" class="btn btn-warning" id="reject">Hylkää konsepti</button>
+          <button type="button" class="btn btn-danger" id="peru">Takaisin</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fallback if user is not logged in -->
+    {% else %}
+      <p>Kirjaudu sisään käyttääksesi sivuston toimintoja.</p>
+    {% endif %}
+  </div>
+</div>
+
+
+
+<script>
+/* invoke IHTSDO embedded external browser */
+function launchEmbeddedBrowser (conceptId, options, tab) {
+  /* update embedded IHTSDO browser */
+  var Taxonomies = new taxonomyPanel(document.getElementById('ihtsdo-taxonomy'), conceptId, options)
+  /* var ref = new refsetPanel(document.getElementById("div-3-id"), options) */
+  var Details = new conceptDetails(document.getElementById('ihtsdo-details'), conceptId, options)
+  var Search = new searchPanel(document.getElementById('ihtsdo-search'), options)
+  Details.subscribe(Taxonomies)
+  Taxonomies.subscribe(Search)
+  Details.subscribe(Search)
+  Details.setupCanvas()
+
+  /* enrich embedded browsers navigation bar with suitable attributes to inherit styling */
+  $('ul#details-tabs-ihtsdo-details.nav.nav-tabs').attr('role', 'tablist')
+  $('ul#details-tabs-ihtsdo-details.nav.nav-tabs > li').attr('class', 'nav-item')
+  $('ul#details-tabs-ihtsdo-details.nav.nav-tabs > li > a').attr('class', 'nav-link')
+
+  /* make detail summary main element a bit wider */
+  $('#home-attributes-ihtsdo-details.col-md-offset-1.col-md-4').removeClass('col-md-4').addClass('col-md-6')
+
+  /* hide horizontal scroll bar which shouldn't be visible */
+  $('.panel.panel-default').css('overflow-x', 'hidden')
+
+  /* align all search options buttons */
+  $('div#ihtsdo-search-searchConfigBar div').css('margin-top', '5px')
+
+  /* update external browser link with selected Snomed-CT concept ID */
+  $('#ihtsdo_browser_link').attr('href', 'http://browser.ihtsdotools.org/?perspective=full&conceptId1=' +
+    $(this).find('td.conceptid').text() +
+    '&edition=en-edition&release=v20180731&server=http://browser.ihtsdotools.org/api/v1/snomed&langRefset=900000000000509007')
+
+  /* external browser is hidden by default, but when CT term is selected, it should be casted */
+  $('div#embedded-externals').css('display', 'block')
+
+  /* open corresponding tab */
+  $('#ihtsdo-tabs a[href="#ihtsdo-' + tab + '-tab"]').tab('show')
+
+  /* on manual search, go to details tab when clicking search results */
+  $('tbody#ihtsdo-search-resultsTable').on('click', function (e) {
+    var clickedElement = e.target
+    if (clickedElement.hasAttribute('data-concept-id')) {
+      $('#ihtsdo-tabs a[href="#ihtsdo-details-tab"]').tab('show')
+
+      /* when something is selected allow saving */
+      $('#tallenna').removeClass('disabled').removeClass('btn-secondary').addClass('btn-success')
+    }
+  })
+}
+
+
+
+
+
+
+function OneSelected (Target) {
+  if (Target.hasClass('selected')) {
+    Target.removeClass('selected')
+  } else {
+    Target.parent().find('tr.selected').removeClass('selected')
+    Target.addClass('selected')
+  }
+}
+
+
+
+
+
+
+function BoomTable (Target) {
+  $(Target).DataTable().rows().remove().draw()
+  $(Target).DataTable().destroy()
+}
+
+
+
+
+
+
+$(document).ready(function () {
+  /* invoke DataTable object */
+  $('#novel').DataTable({
+    'order': [[ 1, 'asc' ]],
+    'pageLength': 10,
+    'language': { 'url': "{{ url_for('static', filename='js/akheron/Finnish.json') }}" },
+    'columnDefs': [{
+      'targets': [ 0, 3 ],
+      'visible': false,
+      'searchable': false
+    }],
+    'rowGroup': { 'dataSrc': 0 }
+  })
+
+
+
+
+
+
+  /* make tables nicer with jQuery DataTable */
+  var selected = []
+  $('#novel_similar_concepts').DataTable({
+    processing: true,
+    serverSide: true,
+    deferRender: true,
+    sServerMethod: 'POST',
+    sAjaxSource: '/_similar_terms',
+    columns: [
+      { data: "Huom" },
+      { data: "Lähdekoodi" },
+      { data: "Lähdetermi" },
+      { data: "Kohdekoodi" },
+      { data: "Kohdetermi" },
+      { data: "N" },
+      { data: "Alkaen" },
+      { data: "Asti" },
+      { data: "Sillannut" },
+      { data: "Aikaleima" },
+      { data: "Status" },
+      { data: "Concept ID" },
+      { data: "Note" }
+    ],
+    'order': [[ 5, 'desc' ]],
+    stateSave: false,
+    'search': { 'regex': true },
+    'pageLength': 10,
+    'language': { 'url': "{{ url_for('static', filename='js/akheron/Finnish.json') }}" },
+    select: {
+      style: 'os',
+      selector: 'td:first-child'
+    },
+    'columnDefs': [{
+      'targets': [10, 11, 12],
+      'visible': false,
+      'searchable': false
+    }, {
+      'targets': [0, 1, 5, 6, 7, 9],
+      'searchable': false
+    }],
+    "createdRow": function (row, data, dataIndex, cells) {
+      $(row).attr('id', data['Concept ID'])
+
+      if (selected.indexOf(data['Concept ID'].toString()) > -1) {
+        $(row).addClass('selected')
+      }
+
+      if (data['Status'] == 'bridge') {
+        $(row).addClass('table-secondary')
+      }
+      else if (data['Status'] == 'self') {
+        $(row).addClass('table-success')
+      }
+      else if (data['Status'] == 'own_organisation') {
+        $(row).addClass('table-info')
+      }
+      else {
+        $(row).addClass('table-light')
+      }
+
+      if (data['Note'] != '') {
+        $(cells[0]).css('color', '#ff0000').html("<span rel='tooltip' data-placement='left' data-original-title='" + data['Note'] + "'>" + $(cells[0]).html() + "</span>")
+      }
+    },
+    "fnInitComplete": function (oSettings, json) {
+      /* activate tooltips */
+      $("[rel='tooltip']").tooltip({ html: true, delay: { show: 0, hide: 100 } })
+    }
+  })
+
+
+
+
+
+
+  /* neat loading animation */
+  var table = $('#novel_similar_concepts').DataTable()
+  table.on('draw', function () {
+    $('div.loader').css({ opacity: 0, transition: 'opacity 0.5s' }).slideUp(1000)
+    $('div.original-placeholder').slideDown(1000)
+  })
+
+
+
+
+
+
+  /* "Peru" button function */
+  $('#peru').on('click', function(e) {
+    e.preventDefault()
+    window.location.href = '/terms'
+  })
+
+
+
+
+
+
+  /* IHTSDO SNOMED-CT Browser API settings */
+  var options = {
+    serverUrl: 'http://browser.ihtsdotools.org/api/v1/snomed',
+    edition: 'en-edition',
+    release: 'v20180731',
+    showIds: false,
+    hideNotAcceptable: true,
+    displayInactiveDescriptions: false,
+    displaySynonyms: true,
+    selectedView: 'inferred',
+    displayChildren: false,
+    langRefset: ['900000000000509007'],
+    closeButton: false,
+    collapseButton: false,
+    linkerButton: true,
+    subscribersMarker: true,
+    searchMode: 'partialMatching',
+    searchLang: 'english',
+    diagrammingMarkupEnabled: false,
+    statusSearchFilter: 'activeOnly',
+    highlightByEffectiveTime: 'false'
+  }
+
+
+
+
+
+
+  /* Novel tab: fetched fuzzymatch terms on-click event */
+  $('#novel tbody').on('click', 'tr.table-light', function (e) {
+    e.preventDefault()
+
+    /* allow only one row to be selected */
+    OneSelected($(this))
+
+    /* when something is selected allow saving and going to external IHTSDO browser */
+    $('#tallenna').removeClass('disabled').removeClass('btn-secondary').addClass('btn-success')
+    $('#ihtsdo_button').removeClass('disabled').removeClass('btn-secondary').addClass('btn-info')
+
+    /* show embedded browser with additional details and optional search functionality */
+    if ($(this).find('td.newterm').text()) {
+      launchEmbeddedBrowser($(this).prev('tr.group').find('td').text(), options, 'details')
+    } else {
+      /* exception if no code can be found */
+      launchEmbeddedBrowser('', options, 'search')
+    }
+  })
+
+
+
+
+
+
+  /* Novel tab: if nothing is returned (result table is empty) */
+  $('#novel tbody').on('click', 'td.dataTables_empty', function (e) {
+    e.preventDefault()
+
+    /* show embedded browser with manual search functionality */
+    launchEmbeddedBrowser('', options, 'search')
+  })
+
+
+
+
+
+
+  /* activate tooltips */
+  $("[rel='tooltip']").tooltip({ html: true, delay: {show: 0, hide: 100} })
+
+
+
+
+
+
+  /* function to maintain selections while paginating server-processed table */
+  $('#novel_similar_concepts tbody').on('click', 'tr.table-light', function (e) {
+    e.preventDefault()
+
+    if ($(e.target).index() === 0) {
+      alert("Et voi lisätä kommenttia siltaustilassa")
+    } else {
+      var id = $(this).attr('id')
+      var index = $.inArray(id, selected)
+
+      if (index === -1) {
+        selected.push(id)
+      } else {
+        selected.splice(index, 1)
+      }
+
+      $(this).toggleClass('selected')
+    }
+  })
+
+
+
+
+
+
+  /* prevent selection of mapped concepts */
+  $('#novel_similar_concepts tbody').on('click', 'tr.table-secondary, tr.table-primary, tr.table-info', function (e) {
+    e.preventDefault()
+    alert("Et voi valita jo käsiteltyä konseptia")
+  })
+
+
+  $('#reject').on('click', function (e) {
+    e.preventDefault()
+    console.log(selected)
+  })
+
+
+
+  /* TODO */
+  $('#tallenna').on('click', function (e) {
+    e.preventDefault()
+
+    if (!$('#tallenna').hasClass('disabled')) {
+      /* change buttons */
+      $('#tallenna').addClass('disabled')
+      $('#tallenna').html('Tallennetaan ...').addClass('btn-secondary').removeClass('btn-success')
+      $('#peru').addClass('disabled')
+
+      /* find selected term */
+      var nc = $('#home-attributes-ihtsdo-details h5 #copy-content-custom').text().split('|')[0].trim()
+      var nt = $('#home-attributes-ihtsdo-details h5 #copy-content-custom').text().split('|')[1].trim()
+
+      /* TODO: miten postataan array  [1,2,3] */
+      $.post('_event', { 'old_concepts': selected, 'new_code': nc, 'new_term': nt }).done(function () {
+        window.location.href = '/terms'
+      }).fail(function () {
+        /* TODO: proper failing */
+        window.alert('something went wrong')
+      })
+    }
+  })
+})
+
+</script>
+{% endblock %}
