@@ -47,19 +47,11 @@
 <!-- <script src="{{ url_for('static', filename='js/akheron/neovis.js') }}"></script> -->
 {% endblock %}
 
-{% block title %}Kohdekoodisto{% endblock %}
-
 {% block sisältö %}
 <div class="content-section">
   <div class="contents">
     {% if current_user.is_authenticated %}
 
-    <!-- Loading animation -->
-    <div class="novel-loader">
-      <div class="center spinner" id="loading-animation"></div>
-    </div>
-
-    <div class="novel-placeholder">
       <div class="help-text">
         <p>Valitse alla olevasta taulukosta se kohdekonsepti ("Uusi koodi" ja "Uusi termi" -pari), joka mielestäsi vastaa organisaatiossasi käytettyä konseptia, jota olet siltaamassa.</p>
       </div>
@@ -69,7 +61,7 @@
       <table id="novel" class="table table-hover table-sm">
         <thead class="thead-light">
           <tr>
-            <th>Uusi koodi</th><th>Uusi konsepti</th><th>Uusi murre</th><th>Uusi konsepti-ID</th>
+            <th>Uusi koodi</th><th>Uusi konsepti</th><th>Uusi murre</th><th>Organisaatio</th><th>Uusi konsepti-ID</th>
           </tr>
         </thead>
         <tbody>
@@ -78,6 +70,7 @@
               <td class="newcode">{{ row.destination_code_text }}</td>
               <td class="newterm">{{ row.destination_term_text }}</td>
               <td class="dialect">{{ row.destination_dialect_name }}</td>
+              <td class="organisation">{{ row.organisation_name }}</td>
               <td class="concept-id">{{ row.destination_concept_id }}</td>
             </tr>
           {% endfor %}
@@ -121,57 +114,28 @@
           </div>
         </div>
       {% endif %}
-
-      <div class="novel-similars-loader">
-        <div class="center spinner" id="loading-animation"></div>
-      </div>
-
-      <div class="novel-similars-placeholder">
-        <div id="novel-similars-block">
-          <h5>Samankaltaisia koodeja ja termejä alkuperäisessä (organisaatiosi) koodistossa:</h5>
-          <!--<table id='novel_similar_concepts' class='table table-hover table-sm'>
-            <thead class='thead-light'>
-              <tr><th>Huom</th><th>Organisaatiosi koodi</th><th>Organisaatiosi termi</th><th>N</th><th>Alkaen</th><th>Asti</th></tr>
-            </thead>
-            <tbody>
-              {% for sim in simi %}
-                <tr class="table-light">
-                  <td class="huomio">Huomio</td>
-                  <td class="oldcode">{{ sim.code_text }}</td>
-                  <td class="oldterm">{{ sim.term_text }}</td>
-                  <td class="n">{{ sim.obs_number }}</td>
-                  <td class="alkaen">{{ sim.first_obs_date }}</td>
-                  <td class="asti">{{ sim.last_obs_date }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>-->
-
-          <table id="novel_similar_concepts" class="table table-hover table-sm">
-            <thead class="thead-light">
-              <!--<tr><th>Huom</th><th>Organisaatiosi koodi</th><th>Organisaatiosi termi</th><th>N</th><th>Alkaen</th><th>Asti</th></tr>-->
-              <tr>
-                <th>Huom</th><th>Lähdekoodi</th><th>Lähdetermi</th><th>Kohdekoodi</th><th>Kohdetermi</th><th>N</th><th>Alkaen</th><th>Asti</th><th>Sillannut</th><th>Aikaleima</th><th>Konsepti</th><th>Status</th>
-              </tr>
-            </thead>
-            <tbody> <!-- populated with jQuery --> </tbody>
-          </table>
-
-
-
-          <h5>Valitse näistä ne, jotka haluat liittää valittuun kohdekoodiston kohdekonseptiin.</h5>
-        </div>
+      <div id="novel-similars-block">
+        <h5>Samankaltaisia koodeja ja termejä alkuperäisessä (organisaatiosi) koodistossa:</h5>
+        <table id="novel_similar_concepts" class="table table-hover table-sm">
+          <thead class="thead-light">
+            <tr>
+              <th>Huom</th><th>Lähdekoodi</th><th>Lähdetermi</th><th>Kohdekoodi</th><th>Kohdetermi</th><th>N</th><th>Alkaen</th><th>Asti</th><th>Sillannut</th><th>Aikaleima</th><th>Konsepti</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody> <!-- populated with jQuery --> </tbody>
+        </table>
+        <h5>Valitse näistä ne, jotka haluat liittää valittuun kohdekoodiston kohdekonseptiin.</h5>
       </div>
 
       <div class="row" id="save-buttons">
         <div class="selected-original-term"><h5>Olet siltaamassa organisaatiosi konseptia: {{ info[0][0] }} {{ info[0][1] }} (N={{ info[0][2] }})</h5></div>
         <div class="col-sm-12">
           <button type="button" class="btn btn-secondary disabled" id="tallenna">Hyväksy siltaus</button>
-          <button type="button" class="btn btn-warning" id="reject">Hylkää konsepti</button>
-          <button type="button" class="btn btn-danger" id="peru">Takaisin</button>
+          <button type="button" class="btn btn-warning" id="reveal-reject">Hylkää konsepti</button>
+          <span class="rejector"><input type="text" placeholder="Hylkäyksen syy" id="hylsyy"><button type="button" class="btn btn-warning" id="reject" style="margin-left:5px;">HYLKÄÄ</button></span>
+          <button type="button" class="btn btn-secondary" id="peru">Takaisin</button>
         </div>
       </div>
-    </div>
 
     <!-- Fallback if user is not logged in -->
     {% else %}
@@ -183,11 +147,11 @@
 
 
 <script>
+
 /* invoke IHTSDO embedded external browser */
 function launchEmbeddedBrowser (conceptId, options, tab) {
   /* update embedded IHTSDO browser */
   var Taxonomies = new taxonomyPanel(document.getElementById('ihtsdo-taxonomy'), conceptId, options)
-  /* var ref = new refsetPanel(document.getElementById("div-3-id"), options) */
   var Details = new conceptDetails(document.getElementById('ihtsdo-details'), conceptId, options)
   var Search = new searchPanel(document.getElementById('ihtsdo-search'), options)
   Details.subscribe(Taxonomies)
@@ -214,9 +178,6 @@ function launchEmbeddedBrowser (conceptId, options, tab) {
     $(this).find('td.conceptid').text() +
     '&edition=en-edition&release=v20180731&server=http://browser.ihtsdotools.org/api/v1/snomed&langRefset=900000000000509007')
 
-  /* external browser is hidden by default, but when CT term is selected, it should be casted */
-  $('div#embedded-externals').css('display', 'block')
-
   /* open corresponding tab */
   $('#ihtsdo-tabs a[href="#ihtsdo-' + tab + '-tab"]').tab('show')
 
@@ -232,11 +193,6 @@ function launchEmbeddedBrowser (conceptId, options, tab) {
   })
 }
 
-
-
-
-
-
 function OneSelected (Target) {
   if (Target.hasClass('selected')) {
     Target.removeClass('selected')
@@ -248,85 +204,91 @@ function OneSelected (Target) {
 
 
 
-
-
-
-function BoomTable (Target) {
-  $(Target).DataTable().rows().remove().draw()
-  $(Target).DataTable().destroy()
-}
-
-
-
-
-
-
 $(document).ready(function () {
+  $('span.rejector').hide()
+
   /* invoke DataTable object */
   $('#novel').DataTable({
     'order': [[ 1, 'asc' ]],
     'pageLength': 10,
     'language': { 'url': "{{ url_for('static', filename='js/akheron/Finnish.json') }}" },
     'columnDefs': [{
-      'targets': [ 0, 3 ],
+      'targets': [ 0, 4 ],
       'visible': false,
       'searchable': false
     }],
-    'rowGroup': { 'dataSrc': 0 }
+    'rowGroup': { 'dataSrc': 0 },
+    "fnDrawCallback": function (novelDT) {
+      if ($('#novel').DataTable().rows().count() === 1) {
+        $('#novel tbody tr').addClass('selected')
+        launchEmbeddedBrowser(novelDT.aoData[0].anCells[0].outerText, options, 'details')
+        $('#tallenna').removeClass('disabled').removeClass('btn-secondary').addClass('btn-success')
+      }
+    }
   })
-
-
-
-
-
 
   /* make tables nicer with jQuery DataTable */
   var selected = []
   $('#novel_similar_concepts').DataTable({
-    processing: true,
-    serverSide: true,
-    deferRender: true,
-    sServerMethod: 'POST',
-    sAjaxSource: '/_similar_terms',
-    columns: [
-      { data: "Huom" },
-      { data: "Lähdekoodi" },
-      { data: "Lähdetermi" },
-      { data: "Kohdekoodi" },
-      { data: "Kohdetermi" },
-      { data: "N" },
-      { data: "Alkaen" },
-      { data: "Asti" },
-      { data: "Sillannut" },
-      { data: "Aikaleima" },
-      { data: "Status" },
-      { data: "Concept ID" },
-      { data: "Note" }
+    /* server side settings */
+    'processing': true,
+    'serverSide': true,
+    'deferRender': true,
+    'sServerMethod': 'POST',
+    'sAjaxSource': '../_similar_terms',
+    'columns': [
+      { 'data': 'Huom' },
+      { 'data': 'Lähdekoodi' },
+      { 'data': 'Lähdetermi' },
+      { 'data': 'Kohdekoodi' },
+      { 'data': 'Kohdetermi' },
+      { 'data': 'N' },
+      { 'data': 'Alkaen' },
+      { 'data': 'Asti' },
+      { 'data': 'Sillannut' },
+      { 'data': 'Aikaleima' },
+      { 'data': 'Status' },
+      { 'data': 'Concept ID' },
+      { 'data': 'Note' }
     ],
+
+    /* general table settings */
     'order': [[ 5, 'desc' ]],
-    stateSave: false,
+    'stateSave': false,
     'search': { 'regex': true },
     'pageLength': 10,
     'language': { 'url': "{{ url_for('static', filename='js/akheron/Finnish.json') }}" },
-    select: {
-      style: 'os',
-      selector: 'td:first-child'
+    'select': {
+      'style': 'os',
+      'selector': 'td:first-child'
     },
+
+    /* visibility and searchability */
     'columnDefs': [{
-      'targets': [10, 11, 12],
+      'targets': [ 10, 11, 12 ],
       'visible': false,
       'searchable': false
     }, {
-      'targets': [0, 1, 5, 6, 7, 9],
+      'targets': [ 0, 1, 5, 6, 7, 9 ],
       'searchable': false
     }],
-    "createdRow": function (row, data, dataIndex, cells) {
+
+    /* row rendering */
+    'createdRow': function (row, data, dataIndex, cells) {
+      /* add IDs based on concept ID */
       $(row).attr('id', data['Concept ID'])
 
+      /* add selected class */
       if (selected.indexOf(data['Concept ID'].toString()) > -1) {
         $(row).addClass('selected')
       }
 
+      /* add note tooltips */
+      if (data['Note'] != '') {
+        $(cells[0]).css('color', '#ff0000').html("<span rel='tooltip' data-placement='left' data-original-title='" + data['Note'] + "'>" + $(cells[0]).html() + '</span>')
+      }
+
+      /* add colorizing classes to rows based on their statuses */
       if (data['Status'] == 'bridge') {
         $(row).addClass('table-secondary')
       }
@@ -336,77 +298,52 @@ $(document).ready(function () {
       else if (data['Status'] == 'own_organisation') {
         $(row).addClass('table-info')
       }
+      else if (data['Status'] == 'other_organisation') {
+        $(row).addClass('table-primary')
+      }
       else {
         $(row).addClass('table-light')
       }
-
-      if (data['Note'] != '') {
-        $(cells[0]).css('color', '#ff0000').html("<span rel='tooltip' data-placement='left' data-original-title='" + data['Note'] + "'>" + $(cells[0]).html() + "</span>")
-      }
     },
-    "fnInitComplete": function (oSettings, json) {
+
+    /* table initialization complete */
+    'fnInitComplete': function (oSettings, json) {
       /* activate tooltips */
       $("[rel='tooltip']").tooltip({ html: true, delay: { show: 0, hide: 100 } })
     }
   })
 
-
-
-
-
-
-  /* neat loading animation */
-  var table = $('#novel_similar_concepts').DataTable()
-  table.on('draw', function () {
-    $('div.loader').css({ opacity: 0, transition: 'opacity 0.5s' }).slideUp(1000)
-    $('div.original-placeholder').slideDown(1000)
-  })
-
-
-
-
-
-
   /* "Peru" button function */
   $('#peru').on('click', function(e) {
     e.preventDefault()
-    window.location.href = '/terms'
+    window.location.href = '../terms'
   })
-
-
-
-
-
 
   /* IHTSDO SNOMED-CT Browser API settings */
   var options = {
-    serverUrl: 'http://browser.ihtsdotools.org/api/v1/snomed',
-    edition: 'en-edition',
-    release: 'v20180731',
-    showIds: false,
-    hideNotAcceptable: true,
-    displayInactiveDescriptions: false,
-    displaySynonyms: true,
-    selectedView: 'inferred',
-    displayChildren: false,
-    langRefset: ['900000000000509007'],
-    closeButton: false,
-    collapseButton: false,
-    linkerButton: true,
-    subscribersMarker: true,
-    searchMode: 'partialMatching',
-    searchLang: 'english',
-    diagrammingMarkupEnabled: false,
-    statusSearchFilter: 'activeOnly',
-    highlightByEffectiveTime: 'false'
+    'serverUrl': 'https://browser.ihtsdotools.org/api/v1/snomed',
+    'edition': 'en-edition',
+    'release': 'v20180731',
+    'showIds': false,
+    'hideNotAcceptable': true,
+    'displayInactiveDescriptions': false,
+    'displaySynonyms': true,
+    'selectedView': 'inferred',
+    'displayChildren': false,
+    'langRefset': ['900000000000509007'],
+    'closeButton': false,
+    'collapseButton': false,
+    'linkerButton': true,
+    'subscribersMarker': true,
+    'searchMode': 'partialMatching',
+    'searchLang': 'english',
+    'diagrammingMarkupEnabled': false,
+    'statusSearchFilter': 'activeOnly',
+    'highlightByEffectiveTime': 'false'
   }
+  launchEmbeddedBrowser('', options, 'search')
 
-
-
-
-
-
-  /* Novel tab: fetched fuzzymatch terms on-click event */
+  /* unprocessed terms on-click event */
   $('#novel tbody').on('click', 'tr.table-light', function (e) {
     e.preventDefault()
 
@@ -419,79 +356,65 @@ $(document).ready(function () {
 
     /* show embedded browser with additional details and optional search functionality */
     if ($(this).find('td.newterm').text()) {
-      launchEmbeddedBrowser($(this).prev('tr.group').find('td').text(), options, 'details')
+      launchEmbeddedBrowser($(this).prevAll('tr.group').first().find('td').text(), options, 'details')
     } else {
       /* exception if no code can be found */
       launchEmbeddedBrowser('', options, 'search')
     }
   })
 
-
-
-
-
-
-  /* Novel tab: if nothing is returned (result table is empty) */
-  $('#novel tbody').on('click', 'td.dataTables_empty', function (e) {
-    e.preventDefault()
-
-    /* show embedded browser with manual search functionality */
-    launchEmbeddedBrowser('', options, 'search')
-  })
-
-
-
-
-
-
-  /* activate tooltips */
-  $("[rel='tooltip']").tooltip({ html: true, delay: {show: 0, hide: 100} })
-
-
-
-
-
-
   /* function to maintain selections while paginating server-processed table */
   $('#novel_similar_concepts tbody').on('click', 'tr.table-light', function (e) {
     e.preventDefault()
 
+    /* avoid providing complex functionality to add notes during mapping and getting back to same mapping view */
     if ($(e.target).index() === 0) {
-      alert("Et voi lisätä kommenttia siltaustilassa")
+      window.alert('Et voi lisätä kommenttia siltaustilassa')
     } else {
       var id = $(this).attr('id')
       var index = $.inArray(id, selected)
 
+      /* check if clicked row is in 'selected rows' array, and "toggle" its state by adding or removing it to/from array */
       if (index === -1) {
         selected.push(id)
       } else {
         selected.splice(index, 1)
       }
-
+      
+      /* toggle also visual aid of selected rows (pure cosmetics, actual selection is based on array) */
       $(this).toggleClass('selected')
     }
   })
 
-
-
-
-
-
   /* prevent selection of mapped concepts */
-  $('#novel_similar_concepts tbody').on('click', 'tr.table-secondary, tr.table-primary, tr.table-info', function (e) {
+  $('#novel_similar_concepts tbody').on('click', 'tr.table-success, tr.table-secondary, tr.table-primary, tr.table-info', function (e) {
     e.preventDefault()
-    alert("Et voi valita jo käsiteltyä konseptia")
+    window.alert('Et voi valita jo käsiteltyä konseptia')
   })
 
+  /* concept(s) rejection */
+  $('#reveal-reject').on('click', function (e) {
+    e.preventDefault()
+
+    if (!$('#reveal-reject').hasClass('disabled')) {
+      $('#reveal-reject').addClass('disabled')
+    }
+    $('span.rejector').show()
+  })
 
   $('#reject').on('click', function (e) {
     e.preventDefault()
-    console.log(selected)
+
+    /* POST array of selected terms and redirect to homepage after successful response */
+    $.post('../_event', { 'old_concepts': selected, 'comment': $('#hylsyy').val() || '' }).done(function () {
+      window.location.href = '../terms'
+    }).fail(function (e) {
+      e.preventDefault()
+      window.alert('HTTP 500: Konseptin hylkäys epäonnistui')
+    })
   })
 
-
-
-  /* TODO */
+  /* concept(s) mapping */
   $('#tallenna').on('click', function (e) {
     e.preventDefault()
 
@@ -505,16 +428,17 @@ $(document).ready(function () {
       var nc = $('#home-attributes-ihtsdo-details h5 #copy-content-custom').text().split('|')[0].trim()
       var nt = $('#home-attributes-ihtsdo-details h5 #copy-content-custom').text().split('|')[1].trim()
 
-      /* TODO: miten postataan array  [1,2,3] */
-      $.post('_event', { 'old_concepts': selected, 'new_code': nc, 'new_term': nt }).done(function () {
-        window.location.href = '/terms'
-      }).fail(function () {
-        /* TODO: proper failing */
-        window.alert('something went wrong')
+      /* POST array of selected terms and redirect to homepage after successful response */
+      $.post('../_event', { 'old_concepts': selected, 'new_code': nc, 'new_term': nt }).done(function () {
+        window.location.href = '../terms'
+      }).fail(function (e) {
+        e.preventDefault()
+        window.alert('HTTP 500: Konseptin siltaus epäonnistui')
       })
     }
   })
 })
 
 </script>
+
 {% endblock %}

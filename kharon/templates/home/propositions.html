@@ -1,0 +1,264 @@
+<!-- {% import "bootstrap/utils.html" as utils %} -->
+
+{% extends "base.html" %}
+
+{% block sisältö %}
+<div class="content-section">
+  <div class="contents">
+    {% if current_user.is_authenticated %}
+      <div class="help-text">
+        <p>Virallisesta siltaustiedostosta löytyy yksi tai useita vastineita alkuperäiselle konseptille, jota olet siltaamassa. Valitse näistä sopivin kohdekonsepti ("Kohdekoodi" ja "Kohdetermi" -pari). Voit lisäksi valita alemmasta taulukosta muita alkuperäisen (organisaatiosi) koodiston konsepteja ja sillata ne samaan valitsemaasi kohdekonseptiin.</p>
+      </div>
+      <div id="bridge-title"><h5>Virallisesta koodiston siltauksesta ja muiden organisaatioiden siltauksista löytyvät vastineet:</h5></div>
+      <table id='bridge_concepts' class='table table-hover table-sm'>
+        <thead class='thead-light'>
+          <tr><th>Vastaava lähdekoodi</th><th>Vastaava lähdetermi</th><th>Virallinen kohdekoodi</th><th>Virallinen kohdetermi</th><th>Murre</th><th>Organisaatio</th></tr>
+        </thead>
+        <tbody>
+          {% for row in data %}
+            <tr class="table-light">
+              <td class="oldcode">{{ row.source_code_text }}</td>
+              <td class="oldterm">{{ row.source_term_text }}</td>
+              <td class="newcode">{{ row.destination_code_text }}</td>
+              <td class="newterm">{{ row.destination_term_text }}</td>
+              <td class="dialect">{{ row.destination_dialect_name }}</td>
+              <td class="organisation">{{ row.organisation_name }}</td>
+              <td class="concept_id">{{ row.destination_concept_id }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="similars-placeholder">
+        <div id="similars-block">
+          <h5>Samankaltaisia koodeja ja termejä alkuperäisessä (organisaatiosi) koodistossa:</h5>
+          <table id='similar_concepts' class='table table-hover table-sm'>
+            <thead class="thead-light">
+              <tr>
+                <th>Huom</th><th>Lähdekoodi</th><th>Lähdetermi</th><th>Kohdekoodi</th><th>Kohdetermi</th><th>N</th><th>Alkaen</th><th>Asti</th><th>Sillannut</th><th>Aikaleima</th><th>Konsepti</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody> <!-- populated with jQuery --> </tbody>
+          </table>
+          <h5>Valitse alemmasta taulukosta ne konseptit, jotka haluat liittää ylemmän taulukon sillattavaan kohdekonseptiin.</h5>
+        </div>
+        <div class="row" id="save-buttons">
+          <div class="selected-original-term"><h5>Olet siltaamassa organisaatiosi konseptia: {{ info[0][0] }} {{ info[0][1] }} (N={{ info[0][2] }})</h5></div>
+          <div class="col-sm-12">
+            <button type="button" class="btn btn-success disabled" id="btn-hyväksy">Hyväksy siltaus</button>
+            <button type="button" class="btn btn-warning" id="btn-manuaalinen">Manuaalinen haku</button>
+            <button type="button" class="btn btn-secondary" id="btn-sulje">Sulje</button>
+          </div>
+        </div>
+      </div>
+
+    <!-- Fallback if user is not logged in -->
+    {% else %}
+      <p>Kirjaudu sisään käyttääksesi sivuston toimintoja.</p>
+    {% endif %}
+  </div>
+</div>
+
+
+
+<script>
+
+function OneSelected (Target) {
+  if (Target.hasClass('selected')) {
+    Target.removeClass('selected')
+  } else {
+    Target.parent().find('tr.selected').removeClass('selected')
+    Target.addClass('selected')
+  }
+}
+
+function FiddleButtons () {
+  if ($.fn.DataTable.isDataTable('#bridge_concepts')) {
+    if ($('#bridge_concepts tbody tr').hasClass('selected')) {
+      $('#btn-hyväksy').removeClass('disabled')
+    } else {
+      $('#btn-hyväksy').addClass('disabled')
+    }
+  }
+}
+
+
+
+$(document).ready(function () {
+  /* invoke DataTable object */
+  $('#bridge_concepts').DataTable({
+    'order': [[ 1, 'asc' ]],
+    'pageLength': 10,
+    'language': { 'url': "{{ url_for('static', filename='js/akheron/Finnish.json') }}" },
+    'columnDefs': [{
+      'targets': [ 6 ],
+      'visible': false,
+      'searchable': false
+    }]
+  })
+
+  /* make tables nicer with jQuery DataTable */
+  var selected = []
+  $('#similar_concepts').DataTable({
+    /* server side settings */
+    'processing': true,
+    'serverSide': true,
+    'deferRender': true,
+    'sServerMethod': 'POST',
+    'sAjaxSource': '../_similar_terms',
+    'columns': [
+      { 'data': 'Huom' },
+      { 'data': 'Lähdekoodi' },
+      { 'data': 'Lähdetermi' },
+      { 'data': 'Kohdekoodi' },
+      { 'data': 'Kohdetermi' },
+      { 'data': 'N' },
+      { 'data': 'Alkaen' },
+      { 'data': 'Asti' },
+      { 'data': 'Sillannut' },
+      { 'data': 'Aikaleima' },
+      { 'data': 'Status' },
+      { 'data': 'Concept ID' },
+      { 'data': 'Note' }
+    ],
+
+    /* general table settings */
+    'order': [[ 5, 'desc' ]],
+    'stateSave': false,
+    'search': { 'regex': true },
+    'pageLength': 10,
+    'language': { 'url': "{{ url_for('static', filename='js/akheron/Finnish.json') }}" },
+    'select': {
+      'style': 'os',
+      'selector': 'td:first-child'
+    },
+
+    /* visibility and searchability */
+    'columnDefs': [{
+      'targets': [ 10, 11, 12 ],
+      'visible': false,
+      'searchable': false
+    }, {
+      'targets': [ 0, 1, 5, 6, 7, 9 ],
+      'searchable': false
+    }],
+
+    /* row rendering */
+    'createdRow': function (row, data, dataIndex, cells) {
+      /* add IDs based on concept ID */
+      $(row).attr('id', data['Concept ID'])
+
+      /* add selected class */
+      if (selected.indexOf(data['Concept ID'].toString()) > -1) {
+        $(row).addClass('selected')
+      }
+
+      /* add note tooltips */
+      if (data['Note'] != '') {
+        $(cells[0]).css('color', '#ff0000').html("<span rel='tooltip' data-placement='left' data-original-title='" + data['Note'] + "'>" + $(cells[0]).html() + "</span>")
+      }
+
+      /* add colorizing classes to rows based on their statuses */
+      if (data['Status'] == 'bridge') {
+        $(row).addClass('table-secondary')
+      }
+      else if (data['Status'] == 'self') {
+        $(row).addClass('table-success')
+      }
+      else if (data['Status'] == 'own_organisation') {
+        $(row).addClass('table-info')
+      }
+      else if (data['Status'] == 'other_organisation') {
+        $(row).addClass('table-primary')
+      }
+      else {
+        $(row).addClass('table-light')
+      }
+    },
+    'fnInitComplete': function (oSettings, json) {
+      /* activate tooltips */
+      $("[rel='tooltip']").tooltip({ html: true, delay: { show: 0, hide: 100 } })
+    }
+  })
+
+  /* bind clicking events to modal tables */
+  $('#bridge_concepts tbody').on('click', 'tr', function (e) {
+    e.preventDefault()
+
+    /* allow only one row to be selected */
+    OneSelected($(this))
+
+    /* activate/deactivate button */
+    FiddleButtons()
+  })
+
+  /* function to maintain selections while paginating server-processed table */
+  $('#similar_concepts tbody').on('click', 'tr.table-light', function (e) {
+    e.preventDefault()
+
+    /* avoid providing complex functionality to add notes during mapping and getting back to same mapping view */
+    if ($(e.target).index() === 0) {
+      window.alert('Et voi lisätä kommenttia siltaustilassa')
+    } else {
+      var id = $(this).attr('id')
+      var index = $.inArray(id, selected)
+
+      /* check if clicked row is in 'selected rows' array, and "toggle" its state by adding or removing it to/from array */
+      if (index === -1) {
+        selected.push(id)
+      } else {
+        selected.splice(index, 1)
+      }
+
+      /* toggle also visual aid of selected rows (pure cosmetics, actual selection is based on array) */
+      $(this).toggleClass('selected')
+    }
+  })
+
+  /* prevent selection of mapped concepts */
+  $('#similar_concepts tbody').on('click', 'tr.table-success, tr.table-secondary, tr.table-primary, tr.table-info', function (e) {
+    e.preventDefault()
+    window.alert('Et voi valita jo käsiteltyä konseptia')
+  })
+
+  /* POST all selected original concepts to server */
+  $('#btn-hyväksy').on('click', function (e) {
+    e.preventDefault()
+
+    if (!$('#btn-hyväksy').hasClass('disabled')) {
+      /* change buttons */
+      $('#btn-hyväksy').addClass('disabled')
+      $('#btn-hyväksy').html('Tallennetaan ...').addClass('btn-secondary').removeClass('btn-success')
+      $('#btn-sulje').addClass('disabled')
+
+      /* find selected term */
+      var clickedRow = $('#bridge_concepts').find('tr.selected')
+      var nc = clickedRow.find('td.newcode').text()
+      var nt = clickedRow.find('td.newterm').text()
+
+      /* POST array of selected terms and redirect to homepage after successful response */
+      $.post('../_event', { 'old_concepts': selected, 'new_code': nc, 'new_term': nt }).done(function () {
+        window.location.href = '../terms'
+      }).fail(function (e) {
+        e.preventDefault()
+        window.alert('HTTP 500: Konseptin hylkäys epäonnistui')
+      })
+    }
+  })
+
+  /* "Manuaalinen haku" button function */
+  $('#btn-manuaalinen').on('click', function(e) {
+    e.preventDefault()
+    location.href = '../novel_terms/' + window.location.pathname.split("/").reverse()[0]
+  })
+
+  /* "Sulje" button */
+  $('#btn-sulje').on('click', function(e) {
+    e.preventDefault()
+    window.location.href = '../terms'
+  })
+})
+
+</script>
+
+{% endblock %}

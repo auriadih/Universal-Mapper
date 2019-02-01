@@ -2,8 +2,6 @@
 
 {% extends "base.html" %}
 
-{% block title %}Kommentoi konseptia{% endblock %}
-
 {% block sisältö %}
 <div class="content-section">
   <div class="contents">
@@ -11,11 +9,12 @@
 
       <div class="tab-pane" id="note-tab">
         <h5>Lisää oma kommenttisi konseptille</h5>
-        <textarea name="Selite" id="konsepti-kommentti" cols="80" rows="7"></textarea>
+        <textarea name="Selite" id="konsepti-kommentti" cols="80" rows="7">{{ note_text }}</textarea>
         <div class="row" id="save-buttons">
           <div class="selected-original-term"><h5>Olet kommentoimassa organisaatiosi konseptia: {{ info[0][0] }} {{ info[0][1] }} (N={{ info[0][2] }})</h5></div>
           <div class="col-sm-12">
-            <button type="button" class="btn btn-success disabled" id="btn-comment">Tallenna kommentti</button>
+            <button type="button" class="btn btn-success" id="btn-comment">Tallenna</button>
+            <button type="button" class="btn btn-danger" id="btn-remove-comment">Poista</button>
             <button type="button" class="btn btn-secondary" id="btn-reject-comment">Sulje</button>
           </div>
         </div>
@@ -33,44 +32,49 @@
 <script>
 
 $(document).ready(function () {
-  /* activate button when something is typed */
-  $('#konsepti-kommentti').on('input', function () {
-    $('#btn-comment').removeClass('disabled')
-  })
-
-
-
-
-
-
   $('#btn-comment').on('click', function (e) {
     e.preventDefault()
 
-    if (!$('#btn-comment').hasClass('disabled')) {
-      var comment = $('#konsepti-kommentti').val() || ''
+    var comment = $('#konsepti-kommentti').val() || ''
 
-      $.post('/_commenting', { 'comment': comment }).done(function () {
-        $('#btn-comment').html('Tallennetaan ...').addClass('btn-secondary').removeClass('btn-success')
-        if (!$('#btn-comment').hasClass('disabled')) {
-          $('#btn-comment').addClass('disabled')
-        }
-        if (!$('#btn-reject-comment').hasClass('disabled')) {
-          $('#btn-reject-comment').addClass('disabled')
-        }
+    $.post('../_commenting', { 'comment': comment }).done(function () {
+      $('#btn-comment').html('Tallennetaan ...').addClass('btn-secondary').removeClass('btn-success')
+      if (!$('#btn-comment').hasClass('disabled')) {
+        $('#btn-comment').addClass('disabled')
+      }
+      if (!$('#btn-remove-comment').hasClass('disabled')) {
+        $('#btn-remove-comment').addClass('disabled')
+      }
+      if (!$('#btn-reject-comment').hasClass('disabled')) {
+        $('#btn-reject-comment').addClass('disabled')
+      }
 
-        window.location.href = '/terms'
-      })
-    }
+      window.location.href = '../terms'
+    })
   })
 
+  $('#btn-remove-comment').on('click', function (e) {
+    e.preventDefault()
 
+    $.post('../_commenting', { 'comment': '' }).done(function () {
+      $('#btn-remove-comment').html('Poistetaan ...').addClass('btn-secondary').removeClass('btn-danger')
+      if (!$('#btn-comment').hasClass('disabled')) {
+        $('#btn-comment').addClass('disabled')
+      }
+      if (!$('#btn-reject-comment').hasClass('disabled')) {
+        $('#btn-reject-comment').addClass('disabled')
+      }
+      if (!$('#btn-reject-comment').hasClass('disabled')) {
+        $('#btn-reject-comment').addClass('disabled')
+      }
 
-
-
+      window.location.href = '../terms'
+    })
+  })
 
   $('#btn-reject-comment').on('click', function (e) {
     e.preventDefault()
-    window.location.href = '/terms'
+    window.location.href = '../terms'
   })
 })
 

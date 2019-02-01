@@ -69,30 +69,22 @@ def homepage():
 			# source system info
 			user_source_system = db.session.query(VDialect)\
 				.filter(VDialect.dialect_id == user_dialects.c.default_source_dialect_id)\
-				.with_entities(VDialect.code_system_name,
-					VDialect.code_system_id,
-					VDialect.dialect_name,
-					VDialect.dialect_id)\
-				.all()
+				.first()
 
 			# target system info
 			user_destination_system = db.session.query(VDialect)\
 				.filter(VDialect.dialect_id == user_dialects.c.default_destination_dialect_id)\
-				.with_entities(VDialect.code_system_name,
-					VDialect.code_system_id,
-					VDialect.dialect_name,
-					VDialect.dialect_id)\
-				.all()
+				.first()
 
 			# session variables
-			session['source_system'] = user_source_system[0][0]
-			session['source_system_id'] = user_source_system[0][1]
-			session['source_dialect'] = user_source_system[0][2]
-			session['source_dialect_id'] = user_source_system[0][3]
-			session['target_system'] = user_destination_system[0][0]
-			session['target_system_id'] = user_destination_system[0][1]
-			session['target_dialect'] = user_destination_system[0][2]
-			session['target_dialect_id'] = user_destination_system[0][3]
+			session['source_system'] = user_source_system.code_system_name
+			session['source_system_id'] = user_source_system.code_system_id
+			session['source_dialect'] = user_source_system.dialect_name
+			session['source_dialect_id'] = user_source_system.dialect_id
+			session['target_system'] = user_destination_system.code_system_name
+			session['target_system_id'] = user_destination_system.code_system_id
+			session['target_dialect'] = user_destination_system.dialect_name
+			session['target_dialect_id'] = user_destination_system.dialect_id
 
 			# redirect to mapper page
 			return redirect(url_for('browser.mapper_panel'))
@@ -103,8 +95,7 @@ def homepage():
 
 	else:
 		# render home page for visitors
-		return render_template('home/index.html',
-			title = 'Etusivu')
+		return render_template('home/index.html')
 
 
 
@@ -138,7 +129,7 @@ def select_codesystem():
 		.all()
 
 	return render_template('home/select.html',
-		title = 'Koodijärjestelmän valinta',
+		user_org_name = session['user_organisation_name'],
 		source_systems = source_systems)
 
 
@@ -152,6 +143,7 @@ def select_codesystem():
 def return_codesystems():
 	btn = eval(request.form['b'])
 
+	# set session variables to retain selected code systems based on buttons clicked
 	session['source_system'] = btn[0]
 	session['source_system_id'] = db.session.query(CodeSystem)\
 		.filter(CodeSystem.name == btn[0])\
@@ -164,16 +156,17 @@ def return_codesystems():
 		.with_entities(Dialect.dialect_id)\
 		.scalar()
 
+	# return code system information based on buttons clicked
 	systems = db.session.query(CodeSystem, Dialect, Organisations)\
 		.join(Dialect, Dialect.code_system_id == CodeSystem.code_system_id)\
 		.join(Organisations, Organisations.organisation_id == CodeSystem.owner_organisation_id)\
-		.filter(((CodeSystem.name != btn[0])\
-			| (Dialect.dialect_name != btn[3])\
-			| (Organisations.name != btn[1]))\
+		.filter(((CodeSystem.name != btn[0])
+			| (Dialect.dialect_name != btn[3])
+			| (Organisations.name != btn[1]))
 			& (Dialect.is_official == True))\
-		.with_entities(CodeSystem.name,\
-			Organisations.name,\
-			Dialect.dialect_name,\
+		.with_entities(CodeSystem.name,
+			Organisations.name,
+			Dialect.dialect_name,
 			CodeSystem.code_system_id)\
 		.order_by(CodeSystem.code_system_id)\
 		.all()
@@ -191,6 +184,7 @@ def return_codesystems():
 def save_target_codesystem():
 	btn = eval(request.form['b'])
 
+	# set session variables to retain selected code systems based on buttons clicked
 	session['target_system'] = btn[0]
 	session['target_system_id'] = db.session.query(CodeSystem)\
 		.filter(CodeSystem.name == btn[0])\
@@ -232,7 +226,6 @@ CODE MAPPING PANEL
 def mapper_panel():
 	if current_user.is_authenticated:
 		return render_template('home/terms.html',
-			title = 'Universal Mapper: ' + session['source_system'],
 			user_org_name = session['user_organisation_name'])
 
 	else:
@@ -248,12 +241,34 @@ def mapper_panel():
 @browser.route('/_terms', methods = ['POST'])
 
 def mapper_terms():
-	#lim = " limit 100"
-	res = db.engine.execute(default_query.query('select') + default_query.query('from') + ";") # + lim
+	# use bare SQL to fetch the table that custom db function is returning
+	res = db.engine.execute(default_query.query('select') + default_query.query('from') + ';')
 
-	# interactive DataTable.js data table
+	# return interactive DataTable.js data table
 	cols = server_columns.returned_columns_from_server
 	return(jsonify(ServerSideTable(request, res, cols).output_result()))
+
+
+
+
+
+
+# class to retrieve current progress of mappings
+@browser.route('/_pbar', methods = ['GET'])
+
+def mapper_progress():
+	# user bare SQL to fetch the aggregated result of the table that custom db function is returning
+	sel = 'select status as status, count(*) as term_counts, sum(obs_number) as samp_counts'
+	grp = ' group by status'
+	cnt = db.engine.execute(sel + default_query.query('from') + grp + ';')
+	res = cnt.fetchall()
+
+	res_fields = {
+		'status': fields.String,
+		'term_counts': fields.Integer,
+		'samp_counts': fields.Integer
+	}
+	return(jsonify(data = marshal(res, res_fields)))
 
 
 
@@ -263,20 +278,23 @@ def mapper_terms():
 # class for adding a note for certain concept
 @browser.route('/add_note/<concept_id>', methods = ['GET'])
 
-# user cannot access this page without logging in
-@login_required
-
-def concept_note(concept_id=0):
+def concept_note(concept_id):
 	concept_info = db.session.query(VConcepts)\
 		.filter(VConcepts.concept_id == concept_id)\
 		.with_entities(VConcepts.code_text,
 			VConcepts.term_text,
 			VConcepts.obs_number)\
 		.all()
+	
+	old_note = db.session.query(Comments)\
+		.filter((Comments.user_id == session['user_id'])
+			& (Comments.concept_id == concept_id))\
+		.with_entities(Comments.note)\
+		.first()
 
 	return render_template('home/comment.html',
 		info = concept_info,
-		title = 'Universal Mapper: ' + session['source_system'],
+		note_text = old_note.note if old_note is not None else '',
 		user_org_name = session['user_organisation_name'])
 
 
@@ -289,18 +307,23 @@ def concept_note(concept_id=0):
 
 def handle_comments():
 	try:
-		concept_id = int(request.referrer.split("/")[-1])
+		# find out what concept is being commented based on the url of the page (see previous route)
+		concept_id = int(request.referrer.split('/')[-1])
 	except:
 		return "something went wrong", 406
 
 	try:
-		db.session.query(func.code_mapper.upsert_user_concept_note(session['user_id'], concept_id, request.form['comment'])).scalar()
+		# add comment to database
+		db.session.query(func.code_mapper.upsert_user_concept_note(
+			session['user_id'],
+			concept_id,
+			request.form['comment'])).scalar()
 		db.session.commit()
 		db.session.close()
-		return "successfully written to database", 201
+		return 'successfully written to database', 201
 
 	except exc.SQLAlchemyError:
-		return "something went wrong", 500
+		return 'something went wrong', 500
 
 
 
@@ -317,28 +340,34 @@ MAPPING
 @login_required
 
 def mapper_novels(concept_id):
+	# subquery for searching for mapped concepts and returning concept details
 	concept_info = db.session.query(VConcepts)\
 		.filter(VConcepts.concept_id == concept_id)\
 		.subquery()
 
-	mappings_cte = db.session.query(VMapping)\
-		.filter((VMapping.source_code_system_id == session['source_system_id'])\
+	# CTE for limiting returned mappings
+	maps = db.session.query(VMapping)\
+		.filter((VMapping.source_code_system_id == session['source_system_id'])
 			& (VMapping.destination_code_system_id == session['target_system_id']))\
-		.cte("mappings_cte")
+		.cte('maps')
 
+	# check from previous mappings of other organisations and bridge for similar concepts
 	possible_mappings = db.session.query(VMapping)\
-		.filter((mappings_cte.c.destination_code_text != "")\
-			& ((mappings_cte.c.source_code_text == concept_info.c.code_text)\
-			| (mappings_cte.c.source_term_text == concept_info.c.term_text)))\
-		.with_entities(mappings_cte.c.destination_code_text,
-			mappings_cte.c.destination_term_text,
-			mappings_cte.c.destination_dialect_name,
-			mappings_cte.c.destination_concept_id)\
-		.distinct(mappings_cte.c.destination_code_text,
-			mappings_cte.c.destination_term_text,
-			mappings_cte.c.destination_dialect_name)\
+		.filter((maps.c.destination_code_text != '')
+			& ((maps.c.source_code_text == concept_info.c.code_text)
+			| (maps.c.source_term_text == concept_info.c.term_text)))\
+		.with_entities(maps.c.destination_code_text,
+			maps.c.destination_term_text,
+			maps.c.destination_dialect_name,
+			maps.c.organisation_name,
+			maps.c.destination_concept_id)\
+		.distinct(maps.c.destination_code_text,
+			maps.c.destination_term_text,
+			maps.c.organisation_name,
+			maps.c.destination_dialect_name)\
 		.all()
 
+	# concept details to front-end (novel_terms)
 	concept_decoded = db.session.query(concept_info)\
 		.filter(VConcepts.concept_id == concept_id)\
 		.with_entities(VConcepts.code_text,
@@ -349,8 +378,59 @@ def mapper_novels(concept_id):
 	return render_template('home/novel.html',
 		info = concept_decoded,
 		data = possible_mappings,
-		#simi = similar_concepts,
-		title = 'Universal Mapper: ' + session['target_system'],
+		target = session['target_system'],
+		user_org_name = session['user_organisation_name'])
+
+
+
+
+
+
+@browser.route('/propositions/<concept_id>', methods = ['GET'])
+
+# user cannot access this page without logging in
+@login_required
+
+def mapper_propositions(concept_id):
+	# subquery for searching for mapped concepts and returning concept details
+	concept_info = db.session.query(VConcepts)\
+		.filter(VConcepts.concept_id == concept_id)\
+		.subquery()
+	
+	# CTE for limiting returned mappings
+	maps = db.session.query(VMapping)\
+		.filter((VMapping.source_code_system_id == session['source_system_id'])
+			& (VMapping.destination_code_system_id == session['target_system_id']))\
+		.cte('maps')
+
+	# check from previous mappings of other organisations and bridge for similar concepts
+	possible_mappings = db.session.query(VMapping)\
+		.filter((maps.c.destination_code_text != '')
+			& ((func.upper(maps.c.source_code_text) == func.upper(concept_info.c.code_text))
+			& (func.upper(maps.c.source_term_text) == func.upper(concept_info.c.term_text))))\
+		.with_entities(maps.c.source_code_text,
+			maps.c.source_term_text,
+			maps.c.destination_code_text,
+			maps.c.destination_term_text,
+			maps.c.destination_dialect_name,
+			maps.c.organisation_name,
+			maps.c.destination_concept_id)\
+		.distinct(maps.c.destination_code_text,
+			maps.c.destination_term_text,
+			maps.c.destination_dialect_name)\
+		.all()
+	
+	# concept details to front-end (propositions)
+	concept_decoded = db.session.query(concept_info)\
+		.filter(VConcepts.concept_id == concept_id)\
+		.with_entities(VConcepts.code_text,
+			VConcepts.term_text,
+			VConcepts.obs_number)\
+		.all()
+
+	return render_template('home/propositions.html',
+		info = concept_decoded,
+		data = possible_mappings,
 		target = session['target_system'],
 		user_org_name = session['user_organisation_name'])
 
@@ -363,24 +443,22 @@ def mapper_novels(concept_id):
 @browser.route('/_similar_terms', methods = ['POST'])
 
 def similar_terms():
-	try:
-		ref = re.split("\/|\?", request.referrer)
-		concept_id = int(ref[ref.index('novel_terms') + 1])
-	except:
-		return "something went wrong", 406
+	# find out if user came from right subpage and what was the viewed concept
+	ref = re.split('\/|\?', request.referrer)
+	suit = ['propositions', 'novel_terms']
+	i = [ref.index(x) for x in ref if x in suit][0]
+	concept_id = int(ref[i + 1])
 
-	concept_info = db.session.query(VConcepts)\
+	# concept details for 'where' clause in bare SQL
+	conc = db.session.query(VConcepts)\
 		.filter(VConcepts.concept_id == concept_id)\
-		.with_entities(VConcepts.code_text,
-			VConcepts.term_text,
-			VConcepts.obs_number)\
-		.all()
+		.first()
 
-	#lim = " limit 100"
-	wh = " where (code_text = '" + str(concept_info[0][0]) + "' OR term_text = '" + str(concept_info[0][1]) + "') and not (code_text = '" + str(concept_info[0][0]) + "' AND term_text = '" + str(concept_info[0][1]) + "')"
-	res = db.engine.execute(default_query.query('select') + default_query.query('from') + wh + ";") # + lim
+	wh = " where (code_text = '" + str(conc.code_text) + "' OR term_text = '" + str(conc.term_text) + "') "\
+		+ "and not (code_text = '" + str(conc.code_text) + "' AND term_text = '" + str(conc.term_text) + "')"
+	res = db.engine.execute(default_query.query('select') + default_query.query('from') + wh + ';')
 
-	# interactive DataTable.js data table
+	# return interactive DataTable.js data table
 	cols = server_columns.returned_columns_from_server
 	return(jsonify(ServerSideTable(request, res, cols).output_result()))
 
@@ -392,80 +470,69 @@ def similar_terms():
 # mapper functions to save mapped terms to database
 @browser.route('/_event', methods = ['POST'])
 
-# user cannot access this page without logging in
-#@login_required
-
 def concept_mapper():
+	# gather all concepts to be mapped
 	concepts = []
-	# check that user is coming from 'novel_terms' subpage
+
 	try:
-		ref = re.split("\/|\?", request.referrer)
-		concepts = concepts.append(int(ref[ref.index('novel_terms') + 1]))
+		ref = re.split('\/|\?', request.referrer)
+		suit = ['propositions', 'novel_terms']
+		i = [ref.index(x) for x in ref if x in suit][0]
+		concept_id = int(ref[i + 1])
+		concepts.append(concept_id)
 	except:
-		return "something went wrong", 406
+		return 'something went wrong', 406
 
-	# TODO: selvitä miten otetaan vastaan array ja loopataan
-	old_concepts = request.form.get('old_concepts')
+	# if multiple source concepts are selected to be mapped to novel concept, form a loop
+	old_concepts = request.form.getlist('old_concepts[]')
 	if old_concepts:
-		concepts = concepts.extend(old_concepts)
-		concept_info = db.session.query(VConcepts)\
-			.filter(VConcepts.concept_id == old_concept)\
-			.with_entities(VConcepts.code_text,
-				VConcepts.term_text)\
-			.all()
-	else:
-		concept_info = db.session.query(VConcepts)\
-			.filter(VConcepts.concept_id == concept_id)\
-			.with_entities(VConcepts.code_text,
-				VConcepts.term_text)\
-			.all()
+		concepts.extend(old_concepts)
 
-	old_code = concept_info[0][0]
-	old_term = concept_info[0][1]
-	new_code = request.form.get('new_code')
-	new_term = request.form.get('new_term')
-	comment = request.form.get('comment')
-	undo = request.form.get('undo')
+	# loop all concepts to be mapped
+	for concept in concepts:
+		new_code = request.form.get('new_code')
+		new_term = request.form.get('new_term')
+		comment = request.form.get('comment')
 
-	if new_code == None and new_term == None and not undo:
-		reason = "Incorrect concept"
-	else:
-		reason = "User mapping"
-
-	try:
-		# use db function to check if new code & term concept is present
+		# if no novel concept is given, then mark original concept as rejected
 		if new_code == None and new_term == None:
-			new_concept = None
+			reason = 'Incorrect concept'
 		else:
-			new_concept = db.session.query(func.code_mapper.insert_concept_if_not_exists(
-				new_code,
-			    new_term,
-			    session['user_organisation'],
-			    session['target_dialect_id'])).scalar()
+			reason = 'User mapping'
 
-		# add event
 		try:
-			for old_concept in old_concepts:
-				mapping = db.session.query(func.code_mapper.insert_mapping(
-			    	session['user_id'],
-			    	session['session_id'],
-			    	reason,
-			    	old_concept,
-			    	new_concept,
-			    	session['target_dialect_id'],
-					comment)).scalar()
+			# use db function to check if new code & term concept is present
+			if new_code == None and new_term == None:
+				new_concept = None
+			else:
+				owner_id = db.session.query(CodeSystem)\
+					.filter(CodeSystem.code_system_id == session['target_system_id'])\
+					.with_entities(CodeSystem.owner_organisation_id)\
+					.scalar()
+
+				new_concept = db.session.query(func.code_mapper.insert_concept_if_not_exists(
+					new_code,
+				    new_term,
+				    owner_id, # session['user_organisation']
+				    session['target_dialect_id'])).scalar()
+				db.session.commit()
+
+			# add event
+			mapping = db.session.query(func.code_mapper.insert_mapping(
+		    	session['user_id'],
+		    	session['session_id'],
+		    	reason,
+		    	concept,
+		    	new_concept,
+		    	session['target_dialect_id'],
+				comment)).scalar()
+			db.session.commit()
 
 		except exc.SQLAlchemyError:
-			return "something went wrong", 500
+			return 'something went wrong', 500
 
-
-	except exc.SQLAlchemyError:
-		return "something went wrong", 500
-
-	finally:
-		db.session.commit()
-		db.session.close()
-		return "successfully written to database", 201
+	db.session.close()
+	return 'successfully written to database', 201
 
 
 
@@ -473,78 +540,62 @@ def concept_mapper():
 
 
 # info about mapped concept
-@browser.route('/_mapped_info', methods = ['POST'])
+@browser.route('/details/<concept_id>', methods = ['GET'])
 
 # user cannot access this page without logging in
 @login_required
 
-def mapper_info():
-	mapped_code = request.form['code']
-	mapped_term = request.form['desc']
-
-	mapped_concept = db.session.query(VMapping)\
-		.filter((VMapping.source_code_text == mapped_code)\
-			& (VMapping.source_term_text == mapped_term)\
-			& (VMapping.valid == True)\
-			& (VMapping.source_code_system_id == session['source_system_id'])\
-			& ((VMapping.destination_code_system_id == session['target_system_id']) | (VMapping.destination_code_system_id == None)))\
-		.with_entities(VMapping.valid,
-			VMapping.username,
-			VMapping.last_name,
-			func.substr(VMapping.first_name,1,1).label('first_name'),
-			VMapping.organisation_name,
-			VMapping.source_code_system_name,
-			VMapping.source_dialect_name,
-			VMapping.source_code_text,
-			VMapping.source_term_text,
-			VMapping.destination_code_system_name,
-			VMapping.destination_dialect_name,
-			VMapping.destination_code_text,
-			VMapping.destination_term_text,
-			VMapping.comment,
-			func.to_char(VMapping.insert_ts, 'YYYY-mm-dd HH24:MI').label('insert_ts'),
-			func.to_char(VMapping.update_ts, 'YYYY-mm-dd HH24:MI').label('update_ts'))\
-		.all()
-
-	target_concept = db.session.query(VMapping)\
-		.filter((VMapping.source_code_text == mapped_code)\
-			& (VMapping.source_term_text == mapped_term)\
-			& (VMapping.valid == True)\
-			& (VMapping.source_code_system_id == session['source_system_id'])\
-			& (VMapping.source_dialect_id == session['source_dialect_id'])\
-			& ((VMapping.destination_code_system_id == session['target_system_id'])\
-			| (VMapping.destination_code_system_id == None))\
-			& ((VMapping.destination_dialect_id == session['target_dialect_id'])
-			| (VMapping.destination_dialect_id == None)))\
+def mapper_details(concept_id):
+	# subquery for searching for mapped concepts and returning concept details
+	concept_info = db.session.query(VConcepts)\
+		.filter(VConcepts.concept_id == concept_id)\
 		.subquery()
 
-	mapped_concept_history = db.session.query(VMapping)\
-		.filter((((VMapping.destination_code_id == target_concept.c.destination_code_id)\
-			& (VMapping.destination_term_id == target_concept.c.destination_term_id))
-			| ((VMapping.source_code_id == target_concept.c.source_code_id)\
-			& (VMapping.source_term_id == target_concept.c.source_term_id)))\
-			& (VMapping.valid == False)
-			& (VMapping.organisation_id == session['user_organisation']))\
-		.with_entities(VMapping.valid,
-			VMapping.username,
-			VMapping.last_name,
-			func.substr(VMapping.first_name,1,1).label('first_name'),
-			VMapping.organisation_name,
-			VMapping.source_code_system_name,
-			VMapping.source_dialect_name,
-			VMapping.source_code_text,
-			VMapping.source_term_text,
-			VMapping.destination_code_system_name,
-			VMapping.destination_dialect_name,
-			VMapping.destination_code_text,
-			VMapping.destination_term_text,
-			VMapping.comment,
-			VMapping.event_type_name,
-			VMapping.insert_ts,
-			VMapping.update_ts)\
+	# mapping history
+	hist = db.session.query(VMapping)\
+		.filter((VMapping.source_concept_id == concept_id)
+			& (VMapping.valid == True))\
+		.subquery()
+
+	concept_history = db.session.query(hist)\
+		.with_entities(hist.c.valid,
+			func.concat(hist.c.last_name, ', ', func.substr(hist.c.first_name,1,1), ' (', hist.c.organisation_name, ')').label('mapper'),
+			hist.c.destination_code_text,
+			hist.c.destination_term_text,
+			hist.c.event_type_name,
+			func.coalesce(hist.c.comment, '').label('comment'),
+			func.to_char(hist.c.insert_ts, 'YYYY-mm-dd HH24:MI').label('insert_ts'))\
+		.order_by(hist.c.insert_ts.desc())\
 		.all()
 
-	return(jsonify(mapd = mapped_concept, hist = mapped_concept_history))
+	# other source concepts to same destination concept
+	other_concepts = db.session.query(VMapping)\
+		.filter((VMapping.destination_concept_id == hist.c.destination_concept_id)
+			& (VMapping.valid == True))\
+		.with_entities(VMapping.valid,
+			func.concat(VMapping.last_name, ', ', func.substr(VMapping.first_name,1,1), ' (', VMapping.organisation_name, ')').label('mapper'),
+			VMapping.source_code_text,
+			VMapping.source_term_text,
+			VMapping.event_type_name,
+			func.coalesce(VMapping.comment, '').label('comment'),
+			func.to_char(VMapping.insert_ts, 'YYYY-mm-dd HH24:MI').label('insert_ts'))\
+		.order_by(VMapping.insert_ts.desc())\
+		.all()
+
+	# concept details to front-end (details)
+	concept_decoded = db.session.query(concept_info)\
+		.filter(VConcepts.concept_id == concept_id)\
+		.with_entities(VConcepts.code_text,
+			VConcepts.term_text,
+			VConcepts.obs_number)\
+		.all()
+
+	return render_template('home/details.html',
+		history = concept_history,
+		samedest = other_concepts,
+		info = concept_decoded,
+		target = session['target_system'],
+		user_org_name = session['user_organisation_name'])
 
 
 
@@ -585,22 +636,19 @@ MAPPING STATISTICS
 
 @browser.route('/tilastot')
 
+# user cannot access this page without logging in
+@login_required
+
 def stats():
-	if current_user.is_authenticated:
-		# already mapped (all)
-		snomapped = Mapping.query\
-			.distinct(Mapping.mapping_id)\
-			.with_entities(Mapping.code_text, Mapping.term_text)\
-			.all()
+	# already mapped (all)
+	snomapped = Mapping.query\
+		.distinct(Mapping.mapping_id)\
+		.with_entities(Mapping.code_text,
+			Mapping.term_text)\
+		.all()
 
-		snomedmapped = collections.OrderedDict(snomapped)
+	snomedmapped = collections.OrderedDict(snomapped)
 
-		# render home page for authenticated users
-		return render_template('home/tilastot.html',
-			title = 'Mapper Statistics',
-			mapped = jsonify(snomedmapped))
-
-	else:
-		# render home page for visitors
-		return render_template('home/index.html',
-			title = 'Etusivu')
+	# render home page for authenticated users
+	return render_template('home/tilastot.html',
+		mapped = jsonify(snomedmapped))

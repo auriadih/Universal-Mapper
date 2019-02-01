@@ -1,12 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}{{ title }}{% endblock %}
-
 {% block sisältö %}
 <div class="content-section">
   <div class="contents">
     <div class="intro-message">
-      <h1>{{ title }}</h1>
       <hr class="intro-divider">
       {% if current_user.is_authenticated %}
         <h3>Tervetuloa takaisin, {{ current_user.first_name }} {{ current_user.last_name }}!</h3><br>
@@ -35,6 +32,7 @@
 
 
 <script>
+
 {% if source_systems %}
 var s = {{ source_systems|tojson|safe }}
 var BtnHtml = []
@@ -43,13 +41,15 @@ for (var i = 0; i < s.length; i++) {
     + "<h5>" + s[i][0] + " (" + s[i][1] + ")<br>" + s[i][3] + "</h5></button>"
 }
 
-var Painikkeet = ''
 /* Populate buttons to users home page */
+var Painikkeet = ''
 $(function () {
   Painikkeet = document.getElementById('sillattavat-koodistot')
   Painikkeet.innerHTML += BtnHtml
 })
 {% endif %}
+
+
 
 $(document).ready(function () {
   $('#sillattavat-koodistot > button').on('click', function (e) {
@@ -82,5 +82,7 @@ $(document).ready(function () {
     })
   })
 })
+
 </script>
+
 {% endblock %}

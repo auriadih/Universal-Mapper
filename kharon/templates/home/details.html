@@ -1,0 +1,124 @@
+<!-- {% import "bootstrap/utils.html" as utils %} -->
+
+{% extends "base.html" %}
+
+{% block sisältö %}
+<div class="content-section">
+  <div class="contents">
+    {% if current_user.is_authenticated %}
+      <div class="row">
+        <div class="selected-original-term"><h5>Katselet sillattua organisaatiosi konseptia: {{ info[0][0] }} {{ info[0][1] }} (N={{ info[0][2] }})</h5></div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h4>Siltaushistoria organisaatiossasi:</h4><br>
+          <table id='mapping_history' class='table table-hover table-sm'>
+            <thead class='thead-light'>
+              <tr><th>Voimassa</th><th>Siltaaja</th><th>Kohdekoodi</th><th>Kohdetermi</th><th>Tyyppi</th><th>Kommentti</th><th>Aikaleima</th></tr>
+            </thead>
+            <tbody>
+              {% for mapping in history %}
+                <tr class="table-light">
+                  <td class="oldcode">{{ mapping.valid }}</td>
+                  <td class="oldterm">{{ mapping.mapper }}</td>
+                  <td class="newcode">{{ mapping.destination_code_text }}</td>
+                  <td class="newterm">{{ mapping.destination_term_text }}</td>
+                  <td class="dialect">{{ mapping.event_type_name }}</td>
+                  <td class="comment">{{ mapping.comment }}</td>
+                  <td class="insert_ts">{{ mapping.insert_ts }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h4>Muut samaan kohdekonseptiin sillatut lähdekonseptit omassa että muissa organisaatioissa:</h4><br>
+          <table id='same_destination_concepts' class='table table-hover table-sm'>
+            <thead class='thead-light'>
+              <tr><th>Voimassa</th><th>Siltaaja</th><th>Lähdekoodi</th><th>Lähdetermi</th><th>Tyyppi</th><th>Kommentti</th><th>Aikaleima</th></tr>
+            </thead>
+            <tbody>
+              {% for concept in samedest %}
+                <tr class="table-light">
+                  <td class="oldcode">{{ concept.valid }}</td>
+                  <td class="oldterm">{{ concept.mapper }}</td>
+                  <td class="newcode">{{ concept.source_code_text }}</td>
+                  <td class="newterm">{{ concept.source_term_text }}</td>
+                  <td class="dialect">{{ concept.event_type_name }}</td>
+                  <td class="comment">{{ concept.comment }}</td>
+                  <td class="insert_ts">{{ concept.insert_ts }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="row" id="save-buttons">
+        <div class="selected-original-term"><h5>Katselet sillattua organisaatiosi konseptia: {{ info[0][0] }} {{ info[0][1] }} (N={{ info[0][2] }})</h5></div>
+        <div class="col-sm-12">
+          <button type="button" class="btn btn-warning" id="btn-change-mapping">Muokkaa siltausta</button>
+          <button type="button" class="btn btn-secondary" id="btn-close">Sulje</button>
+        </div>
+      </div>
+
+    <!-- Fallback if user is not logged in -->
+    {% else %}
+      <p>Kirjaudu sisään käyttääksesi sivuston toimintoja.</p>
+    {% endif %}
+  </div>
+</div>
+
+
+
+<script>
+
+function OneSelected (Target) {
+  if (Target.hasClass('selected')) {
+    Target.removeClass('selected')
+  } else {
+    Target.parent().find('tr.selected').removeClass('selected')
+    Target.addClass('selected')
+  }
+}
+
+
+
+$(document).ready(function () {
+  /* invoke DataTable objects */
+  $('#mapping_history').DataTable({
+    'order': [[ 6, 'desc' ]],
+    'pageLength': 10,
+    'language': { 'url': "{{ url_for('static', filename='js/akheron/Finnish.json') }}" },
+    'columnDefs': [{
+      'targets': [ 0, 1, 6 ],
+      'searchable': false
+    }]
+  })
+  $('#same_destination_concepts').DataTable({
+    'order': [[ 6, 'desc' ]],
+    'pageLength': 10,
+    'language': { 'url': "{{ url_for('static', filename='js/akheron/Finnish.json') }}" },
+    'columnDefs': [{
+      'targets': [ 0, 1, 6 ],
+      'searchable': false
+    }]
+  })
+
+  /* redirect to mapping subpage */
+  $('#btn-change-mapping').on('click', function (e) {
+    e.preventDefault()
+    location.href = '../novel_terms/' + window.location.pathname.split("/").reverse()[0]
+  })
+
+  /* "Sulje" button */
+  $('#btn-close').on('click', function(e) {
+    e.preventDefault()
+    window.location.href = '../terms'
+  })
+})
+
+</script>
+
+{% endblock %}
